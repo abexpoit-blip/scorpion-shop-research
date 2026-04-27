@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import logo from "@/assets/panther-logo.png";
 import { Button } from "@/components/ui/button";
 import { BuildBadge } from "@/components/BuildBadge";
-import { verifyAdminAccess } from "@/lib/adminAccess";
+import { PRIMARY_ADMIN_EMAIL, verifyAdminAccess } from "@/lib/adminAccess";
 
 type Density = "comfortable" | "compact";
 
@@ -20,11 +20,12 @@ const baseNav = [
 
 export const AppShell = ({ children }: { children: ReactNode }) => {
   const { profile, roles, activeRole, setActiveRole, signOut, loading, user, profileError, refresh } = useAuth();
-  const canSell = roles.includes("seller") || roles.includes("admin");
+  const isPrimaryAdmin = (user?.email ?? "").toLowerCase() === PRIMARY_ADMIN_EMAIL;
+  const canSell = roles.includes("seller") || roles.includes("admin") || isPrimaryAdmin;
   // Effective mode honours the user's pick at login but falls back safely for
   // accounts that don't actually carry the seller role.
   const effectiveRole: "buyer" | "seller" = activeRole === "seller" && canSell ? "seller" : "buyer";
-  const roleLabel = roles.includes("admin")
+  const roleLabel = isPrimaryAdmin || roles.includes("admin")
     ? "Admin"
     : effectiveRole === "seller"
     ? "Seller"
@@ -53,10 +54,10 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
   // Only surface the Seller panel link when the user is currently in seller mode
   // (or is an admin). Buyers in buyer-mode shouldn't see the seller nav even if
   // their account also holds the seller role.
-  if ((effectiveRole === "seller" && canSell) || roles.includes("admin")) {
+  if ((effectiveRole === "seller" && canSell) || roles.includes("admin") || isPrimaryAdmin) {
     items.splice(5, 0, { to: "/seller", label: "Seller", icon: PackagePlus });
   }
-  if (roles.includes("admin")) {
+  if (roles.includes("admin") || isPrimaryAdmin) {
     items.push({ to: "/admin", label: "Admin", icon: ShieldCheck });
   }
 
@@ -354,6 +355,7 @@ export const AdminRoute = ({ children }: { children: ReactNode }) => {
   const loc = useLocation();
   const [verifiedAdmin, setVerifiedAdmin] = useState(false);
   const [checkingAdmin, setCheckingAdmin] = useState(false);
+  const isPrimaryAdmin = (user?.email ?? "").toLowerCase() === PRIMARY_ADMIN_EMAIL;
 
   useEffect(() => {
     let active = true;
@@ -370,8 +372,14 @@ export const AdminRoute = ({ children }: { children: ReactNode }) => {
       return;
     }
 
+    if (isPrimaryAdmin) {
+      setVerifiedAdmin(true);
+      setCheckingAdmin(false);
+      return;
+    }
+
     setCheckingAdmin(true);
-    verifyAdminAccess(user.id)
+    verifyAdminAccess(user.id, { email: user.email })
       .then((isAdmin) => {
         if (active) {
           setVerifiedAdmin(isAdmin);
@@ -391,11 +399,12 @@ export const AdminRoute = ({ children }: { children: ReactNode }) => {
     return () => {
       active = false;
     };
-  }, [roles, user]);
+  }, [isPrimaryAdmin, roles, user]);
 
   if (loading && !profileError) return <div className="min-h-screen flex items-center justify-center">Loading…</div>;
   // Not signed in → bounce straight to admin login, remembering where they tried to go.
   if (!user) return <Navigate to="/admin-login" replace state={{ from: loc }} />;
+  if (isPrimaryAdmin) return <>{children}</>;
   if (!roles.includes("admin") && checkingAdmin) {
     return <div className="min-h-screen flex items-center justify-center">Checking admin access…</div>;
   }
