@@ -200,12 +200,8 @@ const Admin = () => {
   };
 
   return (
-    <AppShell>
+    <AdminLayout title="Control Center">
       <div className="space-y-6">
-        <div className="flex items-center gap-3">
-          <Shield className="h-8 w-8 text-primary-glow" />
-          <h1 className="font-display text-3xl font-black neon-text">ADMIN CONTROL CENTER</h1>
-        </div>
 
         {/* STATS */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
