@@ -22,26 +22,18 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- ---- users ----
+-- We use a generated lowercase column for case-insensitive uniqueness
+-- (avoids requiring the citext extension on minimal Postgres installs).
 CREATE TABLE IF NOT EXISTS users (
   id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   email         text UNIQUE NOT NULL,
-  username      citext_or_text_unused text,
-  username_ci   text UNIQUE NOT NULL,
+  username      text NOT NULL,
+  username_ci   text GENERATED ALWAYS AS (lower(username)) STORED UNIQUE,
   password_hash text NOT NULL,
   is_active     boolean NOT NULL DEFAULT true,
   created_at    timestamptz NOT NULL DEFAULT now(),
   updated_at    timestamptz NOT NULL DEFAULT now()
 );
-
--- We use a lowercased copy column for case-insensitive uniqueness
--- (avoids requiring the citext extension on minimal Postgres installs).
-ALTER TABLE users DROP COLUMN IF EXISTS username;
-ALTER TABLE users DROP COLUMN IF EXISTS username_ci CASCADE;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS username text NOT NULL DEFAULT '';
-ALTER TABLE users ADD COLUMN IF NOT EXISTS username_ci text GENERATED ALWAYS AS (lower(username)) STORED;
-DO $$ BEGIN
-  ALTER TABLE users ADD CONSTRAINT users_username_ci_key UNIQUE (username_ci);
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- ---- profiles ----
 CREATE TABLE IF NOT EXISTS profiles (
