@@ -152,7 +152,11 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
             )}
 
             <NavLink to="/settings" className="nav-profile flex items-center rounded-full border border-primary/40 bg-secondary/30 hover:border-primary/70 hover:bg-secondary/50 transition-colors group" aria-label="Profile settings">
-              {profileLoading ? (
+              {showProfileError ? (
+                <div className="nav-profile-avatar rounded-full bg-destructive/20 border border-destructive/60 flex items-center justify-center text-destructive font-bold" title={profileError ?? ""}>
+                  !
+                </div>
+              ) : profileLoading ? (
                 <span className="nav-profile-avatar nav-skeleton rounded-full" aria-hidden="true" />
               ) : (
                 <div className="nav-profile-avatar rounded-full bg-gradient-primary flex items-center justify-center font-bold text-primary-foreground shadow-neon transition-transform duration-300 group-hover:scale-105">
@@ -160,7 +164,14 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
                 </div>
               )}
               <div className="hidden xl:block leading-tight pr-1">
-                {profileLoading ? (
+                {showProfileError ? (
+                  <>
+                    <div className="nav-profile-name font-bold text-destructive -mb-0.5">Unavailable</div>
+                    <div className="nav-profile-role text-destructive/80 uppercase tracking-[0.22em] font-semibold text-[10px]">
+                      Tap to retry
+                    </div>
+                  </>
+                ) : profileLoading ? (
                   <>
                     <span className="nav-skeleton nav-skeleton-name block -mb-0.5" aria-hidden="true" />
                     <span className="nav-skeleton nav-skeleton-role block" aria-hidden="true" />
