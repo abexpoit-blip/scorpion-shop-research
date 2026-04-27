@@ -2,8 +2,15 @@ import { useEffect, useState } from "react";
 import { AdminLayout } from "@/components/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Check, X, Users } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Check, X, Users, MessageSquarePlus, Trash2, StickyNote } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
+
+interface AppNote {
+  id: string; application_id: string; author_id: string; note: string; created_at: string;
+}
+interface Profile { id: string; username: string; }
 
 interface Application {
   id: string; user_id: string; shop_name: string | null; contact: string | null;
