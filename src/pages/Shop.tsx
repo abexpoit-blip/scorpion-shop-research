@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { COUNTRIES, countryFlag } from "@/lib/brands";
+import { COUNTRIES, countryFlag, BrandLogo } from "@/lib/brands";
 import { Search, RotateCcw, ShoppingCart, RefreshCw, PackageX, X, BadgeCheck, Store } from "lucide-react";
 import { TrustBadge } from "@/components/TrustBadge";
 import { toast } from "sonner";
@@ -14,7 +14,7 @@ import { useAuth } from "@/hooks/useAuth";
 interface Card {
   id: string; bin: string; brand: string; country: string; state: string | null;
   city: string | null; zip: string | null; exp_month: string | null; exp_year: string | null;
-  refundable: boolean; has_phone: boolean; has_email: boolean; base: string; price: number;
+  refundable: boolean; has_phone: boolean; has_email: boolean; email?: string | null; base: string; price: number;
   status: string; seller_id: string;
 }
 interface Seller {
@@ -248,7 +248,10 @@ const Shop = () => {
                       <input type="checkbox" checked={selected.has(c.id)} onChange={() => toggle(c.id)} className="accent-primary cursor-pointer" />
                     </td>
                     <td className="p-3 font-mono text-foreground whitespace-nowrap">
-                      <div>{c.bin}<span className="text-muted-foreground">********</span></div>
+                      <div className="flex items-center gap-2">
+                        <BrandLogo brand={c.brand} className="h-4" />
+                        <span>{c.bin}<span className="text-muted-foreground">••••••</span></span>
+                      </div>
                       {sellerMap.get(c.seller_id) && (
                         <Link to={`/seller/${c.seller_id}`} onClick={(e) => e.stopPropagation()}
                           className="mt-1 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 border border-primary/30 text-primary-glow hover:bg-primary/20 transition">
@@ -266,7 +269,9 @@ const Shop = () => {
                     <td className="p-3 text-center font-mono">{c.zip ?? "—"}</td>
                     <td className="p-3 text-center whitespace-nowrap">{countryFlag(c.country)} {c.country}</td>
                     <td className="p-3 text-center text-xs">{c.has_phone ? <span className="text-success">yes</span> : <span className="text-muted-foreground">no</span>}</td>
-                    <td className="p-3 text-center text-xs">{c.has_email ? <span className="text-success">yes</span> : <span className="text-muted-foreground">no</span>}</td>
+                    <td className="p-3 text-center text-xs max-w-[180px] truncate" title={c.email ?? undefined}>
+                      {c.email ? <span className="text-foreground">{c.email}</span> : <span className="text-muted-foreground">—</span>}
+                    </td>
                     <td className="p-3 text-center font-display text-primary-glow">{Number(c.price).toFixed(2)}</td>
                     <td className="p-3 text-[11px] text-muted-foreground max-w-[180px] truncate" title={c.base}>{c.base}</td>
                     <td className="p-3 text-center">
