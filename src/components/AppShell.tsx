@@ -235,7 +235,7 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
                   <>
                     <div className="nav-drawer-name font-semibold text-foreground truncate">{profile?.username}</div>
                     <div className="nav-drawer-role text-muted-foreground uppercase tracking-[0.22em]">
-                      {roles.includes("admin") ? "Admin" : roles.includes("seller") ? "Seller" : "Member"}
+                      {roleLabel}
                     </div>
                   </>
                 )}
