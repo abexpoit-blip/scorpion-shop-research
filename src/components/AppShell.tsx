@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Home, Store, ShoppingCart, ListOrdered, Wallet, LifeBuoy, Settings, ShieldCheck, PackagePlus, LogOut, Menu, X, Search, Bell, Maximize2, Minimize2 } from "lucide-react";
+import { Home, Store, ShoppingCart, ListOrdered, Wallet, LifeBuoy, Settings, ShieldCheck, PackagePlus, LogOut, Menu, X, Search, Bell, Maximize2, Minimize2, AlertTriangle, RefreshCw } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import logo from "@/assets/panther-logo.png";
 import { Button } from "@/components/ui/button";
@@ -18,11 +18,12 @@ const baseNav = [
 ];
 
 export const AppShell = ({ children }: { children: ReactNode }) => {
-  const { profile, roles, signOut, loading, user } = useAuth();
-  // Show skeleton only while auth is genuinely initializing. Once loading is
-  // done, render the balance ($0.00 if profile somehow missing) instead of an
-  // infinite skeleton.
-  const profileLoading = loading && !profile && !!user;
+  const { profile, roles, signOut, loading, user, profileError, refresh } = useAuth();
+  // Skeleton ONLY while genuinely fetching for a logged-in user with no error.
+  // The hook guarantees `loading` flips to false within 8s (timeout) so this
+  // can never be stuck "true" forever.
+  const profileLoading = loading && !profile && !!user && !profileError;
+  const showProfileError = !!profileError && !!user && !profile;
   const nav = useNavigate();
   const loc = useLocation();
   const [open, setOpen] = useState(false);
@@ -125,18 +126,37 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
               {density === "compact" ? <Maximize2 className="nav-icon" strokeWidth={2} /> : <Minimize2 className="nav-icon" strokeWidth={2} />}
             </button>
 
-            <div className="nav-balance hidden sm:flex items-center rounded-full bg-gradient-to-r from-primary/25 to-gold/15 border border-primary/50 shadow-[0_0_18px_-6px_hsl(268_90%_62%/0.6)]">
-              <Wallet className="nav-icon text-primary-glow" strokeWidth={2} />
-              <span className="nav-balance-label uppercase tracking-[0.2em] text-foreground/70">Balance</span>
-              {profileLoading ? (
-                <span className="nav-balance-value nav-skeleton nav-skeleton-balance" aria-hidden="true" />
-              ) : (
-                <span className="nav-balance-value font-display font-bold gold-text drop-shadow-[0_0_8px_hsl(43_96%_56%/0.5)]">${Number(profile?.balance ?? 0).toFixed(2)}</span>
-              )}
-            </div>
+            {showProfileError ? (
+              <button
+                onClick={() => { void refresh(); }}
+                title={profileError ?? "Profile unavailable"}
+                className="hidden sm:flex items-center gap-2 rounded-full border border-destructive/50 bg-destructive/10 px-3 py-1.5 text-destructive hover:bg-destructive/20 transition-colors"
+                aria-label={`Profile error: ${profileError}. Click to retry.`}
+              >
+                <AlertTriangle className="h-3.5 w-3.5" />
+                <span className="font-mono text-[10px] uppercase tracking-[0.2em] font-semibold">
+                  Profile unavailable
+                </span>
+                <RefreshCw className="h-3 w-3" />
+              </button>
+            ) : (
+              <div className="nav-balance hidden sm:flex items-center rounded-full bg-gradient-to-r from-primary/25 to-gold/15 border border-primary/50 shadow-[0_0_18px_-6px_hsl(268_90%_62%/0.6)]">
+                <Wallet className="nav-icon text-primary-glow" strokeWidth={2} />
+                <span className="nav-balance-label uppercase tracking-[0.2em] text-foreground/70">Balance</span>
+                {profileLoading ? (
+                  <span className="nav-balance-value nav-skeleton nav-skeleton-balance" aria-hidden="true" />
+                ) : (
+                  <span className="nav-balance-value font-display font-bold gold-text drop-shadow-[0_0_8px_hsl(43_96%_56%/0.5)]">${Number(profile?.balance ?? 0).toFixed(2)}</span>
+                )}
+              </div>
+            )}
 
             <NavLink to="/settings" className="nav-profile flex items-center rounded-full border border-primary/40 bg-secondary/30 hover:border-primary/70 hover:bg-secondary/50 transition-colors group" aria-label="Profile settings">
-              {profileLoading ? (
+              {showProfileError ? (
+                <div className="nav-profile-avatar rounded-full bg-destructive/20 border border-destructive/60 flex items-center justify-center text-destructive font-bold" title={profileError ?? ""}>
+                  !
+                </div>
+              ) : profileLoading ? (
                 <span className="nav-profile-avatar nav-skeleton rounded-full" aria-hidden="true" />
               ) : (
                 <div className="nav-profile-avatar rounded-full bg-gradient-primary flex items-center justify-center font-bold text-primary-foreground shadow-neon transition-transform duration-300 group-hover:scale-105">
@@ -144,7 +164,14 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
                 </div>
               )}
               <div className="hidden xl:block leading-tight pr-1">
-                {profileLoading ? (
+                {showProfileError ? (
+                  <>
+                    <div className="nav-profile-name font-bold text-destructive -mb-0.5">Unavailable</div>
+                    <div className="nav-profile-role text-destructive/80 uppercase tracking-[0.22em] font-semibold text-[10px]">
+                      Tap to retry
+                    </div>
+                  </>
+                ) : profileLoading ? (
                   <>
                     <span className="nav-skeleton nav-skeleton-name block -mb-0.5" aria-hidden="true" />
                     <span className="nav-skeleton nav-skeleton-role block" aria-hidden="true" />
