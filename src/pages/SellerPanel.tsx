@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { BRANDS, COUNTRIES, BrandLogo, countryFlag } from "@/lib/brands";
-import { Plus, Trash2, Upload, DollarSign, TrendingUp, Package, CheckCircle2, Wallet, Clock } from "lucide-react";
+import { Plus, Trash2, Upload, DollarSign, TrendingUp, Package, CheckCircle2, Wallet, Clock, Percent, PiggyBank, BadgeCheck } from "lucide-react";
 import { toast } from "sonner";
 
 interface CardRow { id: string; bin: string; brand: string; country: string; price: number; status: string; base: string; created_at: string; }
@@ -17,6 +17,9 @@ const SellerPanel = () => {
   const { user } = useAuth();
   const [cards, setCards] = useState<CardRow[]>([]);
   const [payouts, setPayouts] = useState<Payout[]>([]);
+  const [commissionPct, setCommissionPct] = useState<number>(20);
+  const [isVisible, setIsVisible] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [bulk, setBulk] = useState("");
   const [payoutAmount, setPayoutAmount] = useState("");
@@ -29,12 +32,18 @@ const SellerPanel = () => {
 
   const load = async () => {
     if (!user) return;
-    const [c, p] = await Promise.all([
+    const [c, p, prof] = await Promise.all([
       supabase.from("cards").select("*").eq("seller_id", user.id).order("created_at", { ascending: false }),
       supabase.from("payouts").select("*").eq("seller_id", user.id).order("created_at", { ascending: false }),
+      supabase.from("profiles").select("commission_percent,is_seller_visible,is_seller_verified").eq("id", user.id).maybeSingle(),
     ]);
     setCards((c.data ?? []) as CardRow[]);
     setPayouts((p.data ?? []) as Payout[]);
+    if (prof.data) {
+      setCommissionPct(Number(prof.data.commission_percent ?? 20));
+      setIsVisible(!!prof.data.is_seller_visible);
+      setIsVerified(!!prof.data.is_seller_verified);
+    }
   };
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [user]);
 
