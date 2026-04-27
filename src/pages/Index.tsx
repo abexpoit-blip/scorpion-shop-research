@@ -45,15 +45,19 @@ const Index = () => {
                 WELCOME BACK · {profile?.username?.toUpperCase() ?? "MEMBER"}
               </div>
 
-              <h1 className="font-display font-extrabold leading-[0.92] tracking-[-0.04em] text-[64px] sm:text-[88px] lg:text-[112px]">
-                <span className="block text-foreground drop-shadow-[0_0_30px_hsl(0_0%_100%/0.08)]">PREMIUM.</span>
-                <span className="block neon-text">VERIFIED.</span>
-                <span className="block gold-text drop-shadow-[0_0_28px_hsl(43_96%_56%/0.35)]">INSTANT.</span>
+              <h1 className="font-display font-extrabold leading-[1.05] tracking-[-0.03em] text-[44px] sm:text-[64px] lg:text-[80px] text-foreground">
+                The world's most{" "}
+                <em className="not-italic font-display italic gold-text drop-shadow-[0_0_28px_hsl(43_96%_56%/0.35)]">
+                  trusted
+                </em>{" "}
+                Gift <span className="neon-text">Card</span>{" "}
+                <span className="gold-text">&amp;</span>{" "}
+                <span className="gold-text">CC</span> marketplace.
               </h1>
 
               <p className="text-base lg:text-lg text-muted-foreground max-w-xl leading-relaxed">
-                Your trusted Gift Card and CC provider. Verified inventory, instant delivery,
-                vault-grade security — every order, every time.
+                Verified inventory from elite sellers, instant delivery, automated replacement,
+                and vault-grade settlement — engineered for professional buyers who demand the very best.
               </p>
 
               <div className="flex flex-wrap items-center gap-3">
