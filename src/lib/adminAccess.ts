@@ -23,8 +23,11 @@ export async function verifyAdminAccess(userId: string): Promise<boolean> {
   const { data: authUser } = await supabase.auth.getUser();
   const email = authUser.user?.email?.toLowerCase();
 
-  const { data, error } = await withTimeout(
-    supabase.from("user_roles").select("role").eq("user_id", userId),
+  const { data, error } = await withTimeout<{ data: RoleRow[] | null; error: unknown }>(
+    Promise.resolve(supabase.from("user_roles").select("role").eq("user_id", userId)) as Promise<{
+      data: RoleRow[] | null;
+      error: unknown;
+    }>,
     2500,
     "admin-role-timeout",
   );
@@ -38,15 +41,20 @@ export async function verifyAdminAccess(userId: string): Promise<boolean> {
   } = await supabase.auth.getSession();
 
   try {
-    const { data: fallback, error: fallbackError } = await withTimeout(
-      supabase.functions.invoke("verify-admin-access", {
+    const { data: fallback, error: fallbackError } = await withTimeout<{
+      data: { isAdmin?: boolean } | null;
+      error: unknown;
+    }>(
+      Promise.resolve(
+        supabase.functions.invoke("verify-admin-access", {
         headers: session?.access_token
           ? {
               Authorization: `Bearer ${session.access_token}`,
             }
           : undefined,
         body: {},
-      }),
+        }),
+      ) as Promise<{ data: { isAdmin?: boolean } | null; error: unknown }>,
       2500,
       "admin-function-timeout",
     );
