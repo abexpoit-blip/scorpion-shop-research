@@ -17,6 +17,7 @@ import Settings from "./pages/Settings";
 import SellerPanel from "./pages/SellerPanel";
 import SellerApply from "./pages/SellerApply";
 import SellerUpload from "./pages/SellerUpload";
+import SellerProfile from "./pages/SellerProfile";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
@@ -41,6 +42,7 @@ const App = () => (
             <Route path="/seller" element={<ProtectedRoute><SellerPanel /></ProtectedRoute>} />
             <Route path="/seller/apply" element={<ProtectedRoute><SellerApply /></ProtectedRoute>} />
             <Route path="/seller/upload" element={<ProtectedRoute><SellerUpload /></ProtectedRoute>} />
+            <Route path="/seller/:id" element={<ProtectedRoute><SellerProfile /></ProtectedRoute>} />
             <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
