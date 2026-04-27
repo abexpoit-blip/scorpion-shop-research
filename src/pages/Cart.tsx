@@ -47,9 +47,10 @@ const Cart = () => {
       const { data: order, error } = await supabase.from("orders")
         .insert({ user_id: user.id, total }).select().single();
       if (error) throw error;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const orderItems = selectedItems.map((i) => ({
         order_id: order.id,
-        card_snapshot: i.card as unknown as Record<string, unknown>,
+        card_snapshot: JSON.parse(JSON.stringify(i.card)) as any,
         price: Number(i.card.price),
       }));
       await supabase.from("order_items").insert(orderItems);
