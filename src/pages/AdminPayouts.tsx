@@ -144,8 +144,59 @@ const AdminPayouts = () => {
     load();
   };
 
-  const pending = payouts.filter((p) => p.status === "pending");
-  const history = payouts.filter((p) => p.status !== "pending");
+  // Sellers that have at least one payout — used to populate the seller filter
+  const payoutSellers = useMemo(() => {
+    const ids = Array.from(new Set(payouts.map((p) => p.seller_id)));
+    return ids.map((id) => {
+      const u = users.find((x) => x.id === id);
+      return { id, label: u?.seller_display_name || u?.username || id.slice(0, 8) };
+    }).sort((a, b) => a.label.localeCompare(b.label));
+  }, [payouts, users]);
+
+  const filteredPayouts = useMemo(() => {
+    const q = payoutQuery.trim().toLowerCase();
+    const min = minAmount ? Number(minAmount) : null;
+    const max = maxAmount ? Number(maxAmount) : null;
+    const fromTs = dateFrom ? new Date(dateFrom).getTime() : null;
+    const toTs = dateTo ? new Date(dateTo).getTime() + 86_399_999 : null; // include end-of-day
+
+    let list = payouts.filter((p) => {
+      if (statusFilter !== "all" && p.status !== statusFilter) return false;
+      if (sellerFilter !== "all" && p.seller_id !== sellerFilter) return false;
+      const created = new Date(p.created_at).getTime();
+      if (fromTs !== null && created < fromTs) return false;
+      if (toTs !== null && created > toTs) return false;
+      const amt = Number(p.amount);
+      if (min !== null && amt < min) return false;
+      if (max !== null && amt > max) return false;
+      if (q) {
+        const u = users.find((x) => x.id === p.seller_id);
+        const blob = `${u?.username ?? ""} ${u?.seller_display_name ?? ""} ${p.method} ${p.address}`.toLowerCase();
+        if (!blob.includes(q)) return false;
+      }
+      return true;
+    });
+
+    list = [...list].sort((a, b) => {
+      switch (sortBy) {
+        case "created_asc": return +new Date(a.created_at) - +new Date(b.created_at);
+        case "amount_desc": return Number(b.amount) - Number(a.amount);
+        case "amount_asc": return Number(a.amount) - Number(b.amount);
+        default: return +new Date(b.created_at) - +new Date(a.created_at);
+      }
+    });
+    return list;
+  }, [payouts, users, payoutQuery, statusFilter, sellerFilter, dateFrom, dateTo, minAmount, maxAmount, sortBy]);
+
+  const pending = filteredPayouts.filter((p) => p.status === "pending");
+  const history = filteredPayouts.filter((p) => p.status !== "pending");
+
+  const filtersActive = !!(payoutQuery || statusFilter !== "all" || sellerFilter !== "all" || dateFrom || dateTo || minAmount || maxAmount || sortBy !== "created_desc");
+  const resetFilters = () => {
+    setPayoutQuery(""); setStatusFilter("all"); setSellerFilter("all");
+    setDateFrom(""); setDateTo(""); setMinAmount(""); setMaxAmount("");
+    setSortBy("created_desc");
+  };
 
   return (
     <AdminLayout title="Payouts & Commission">
