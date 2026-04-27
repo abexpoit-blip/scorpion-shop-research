@@ -12,6 +12,7 @@ interface Profile {
   balance: number;
   is_seller: boolean;
   seller_status: string | null;
+  banned: boolean;
 }
 
 interface AuthCtx {
@@ -33,13 +34,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const loadProfile = async (uid: string) => {
+  const loadProfile = async (uid: string, email?: string | null) => {
     const [{ data: p }, { data: r }] = await Promise.all([
       supabase.from("profiles").select("*").eq("id", uid).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", uid),
     ]);
-    setProfile(p as Profile | null);
-    setRoles(((r as { role: Role }[] | null) ?? []).map((x) => x.role));
+    const prof = p as Profile | null;
+    const userRoles = ((r as { role: Role }[] | null) ?? []).map((x) => x.role);
+    setProfile(prof);
+    setRoles(userRoles);
+    // Auto-save account for switcher (only if not banned)
+    if (prof && email && !prof.banned) {
+      try {
+        const { saveAccount } = await import("@/lib/accountSwitcher");
+        const role = userRoles.includes("admin") ? "admin" : userRoles.includes("seller") ? "seller" : "user";
+        saveAccount({ email, username: prof.username, role, savedAt: Date.now() });
+      } catch { /* ignore */ }
+    }
   };
 
   useEffect(() => {
@@ -47,7 +58,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(sess);
       setUser(sess?.user ?? null);
       if (sess?.user) {
-        setTimeout(() => loadProfile(sess.user.id), 0);
+        setTimeout(() => loadProfile(sess.user.id, sess.user.email), 0);
       } else {
         setProfile(null);
         setRoles([]);
@@ -57,7 +68,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     supabase.auth.getSession().then(({ data: { session: sess } }) => {
       setSession(sess);
       setUser(sess?.user ?? null);
-      if (sess?.user) loadProfile(sess.user.id).finally(() => setLoading(false));
+      if (sess?.user) loadProfile(sess.user.id, sess.user.email).finally(() => setLoading(false));
       else setLoading(false);
     });
 
@@ -65,7 +76,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const refresh = async () => {
-    if (user) await loadProfile(user.id);
+    if (user) await loadProfile(user.id, user.email);
   };
   const signOut = async () => {
     await supabase.auth.signOut();
