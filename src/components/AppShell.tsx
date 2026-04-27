@@ -2,7 +2,7 @@ import { ReactNode } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Home, Store, ShoppingCart, ListOrdered, Wallet, LifeBuoy, Settings, ShieldCheck, PackagePlus, LogOut, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import logo from "@/assets/scorpion-logo.png";
+import logo from "@/assets/panther-logo.png";
 import { Button } from "@/components/ui/button";
 
 const baseNav = [
