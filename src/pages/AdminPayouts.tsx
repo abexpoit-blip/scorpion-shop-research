@@ -325,7 +325,8 @@ const AdminPayouts = () => {
               </div>
             )}
           </div>
-        )}
+          );
+        })()}
 
         <div className="space-y-2">
           {(tab === "pending" ? pending : history).map((p) => {
