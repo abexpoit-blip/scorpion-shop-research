@@ -13,6 +13,8 @@ import logo from "@/assets/panther-logo.png";
 import { getSavedAccounts, removeSavedAccount, type SavedAccount } from "@/lib/accountSwitcher";
 import { setActiveRole } from "@/lib/activeRole";
 import { describeAuthError, isTransientAuthServiceError } from "@/lib/authErrors";
+import { ForgotPasswordDialog } from "@/components/ForgotPasswordDialog";
+import { Loader2 } from "lucide-react";
 
 type Role = "buyer" | "seller";
 
@@ -26,6 +28,8 @@ const Auth = () => {
   const [captcha, setCaptcha] = useState("");
   const [captchaOk, setCaptchaOk] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [statusBanner, setStatusBanner] = useState<{ kind: "info" | "error"; title: string; hint?: string } | null>(null);
+  const [forgotOpen, setForgotOpen] = useState(false);
   const [savedAccounts, setSavedAccounts] = useState<SavedAccount[]>([]);
 
   useEffect(() => {
@@ -51,7 +55,11 @@ const Auth = () => {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!captchaOk) return toast.error("Verification code is incorrect");
+    setStatusBanner(null);
+    if (!captchaOk) {
+      setStatusBanner({ kind: "error", title: "Verification code is incorrect", hint: "Re-enter the captcha shown above." });
+      return toast.error("Verification code is incorrect");
+    }
     setLoading(true);
     try {
       if (mode === "signup") {
@@ -118,6 +126,7 @@ const Auth = () => {
         await supabase.auth.signOut();
       }
       const friendly = describeAuthError(err);
+      setStatusBanner({ kind: "error", title: friendly.title, hint: friendly.hint });
       toast.error(friendly.title, friendly.hint ? { description: friendly.hint } : undefined);
     } finally { setLoading(false); }
   };
@@ -236,6 +245,17 @@ const Auth = () => {
               </div>
             )}
 
+            {statusBanner && (
+              <div className={`mb-4 rounded-lg border px-3 py-2.5 text-xs ${
+                statusBanner.kind === "error"
+                  ? "border-destructive/50 bg-destructive/10 text-destructive"
+                  : "border-primary/50 bg-primary/10 text-primary-glow"
+              }`} role="alert">
+                <div className="font-semibold">{statusBanner.title}</div>
+                {statusBanner.hint && <div className="opacity-80 mt-0.5">{statusBanner.hint}</div>}
+              </div>
+            )}
+
             <form onSubmit={submit} className="space-y-4">
               <div>
                 <Label className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Username</Label>
@@ -258,7 +278,15 @@ const Auth = () => {
               )}
 
               <div>
-                <Label className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Password</Label>
+                <div className="flex items-center justify-between">
+                  <Label className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Password</Label>
+                  {mode === "login" && (
+                    <button type="button" onClick={() => setForgotOpen(true)}
+                      className="text-[10px] uppercase tracking-[0.2em] text-primary-glow hover:text-primary">
+                      Forgot?
+                    </button>
+                  )}
+                </div>
                 <div className="relative mt-2">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input id="auth-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6}
@@ -273,11 +301,19 @@ const Auth = () => {
                 </div>
               </div>
 
-              <button type="submit" disabled={loading} className="btn-luxe w-full h-12 disabled:opacity-60">
-                {loading ? "Please wait…" : mode === "login" ? "Sign in to your account" : "Create your account"}
+              <button type="submit" disabled={loading} className="btn-luxe w-full h-12 disabled:opacity-60 flex items-center justify-center gap-2">
+                {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+                {loading ? "Signing you in…" : mode === "login" ? "Sign in to your account" : "Create your account"}
               </button>
             </form>
           </div>
+
+          <ForgotPasswordDialog
+            open={forgotOpen}
+            onOpenChange={setForgotOpen}
+            defaultEmail={username.includes("@") ? username : ""}
+            redirectPath="/reset-password"
+          />
 
           <p className="text-center text-[10px] font-mono tracking-[0.3em] text-muted-foreground mt-6 lg:hidden">
             © {new Date().getFullYear()} CRUZERCC.SHOP
