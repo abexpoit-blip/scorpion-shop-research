@@ -58,11 +58,29 @@ const AdminPayouts = () => {
   const togglePayout = (id: string) =>
     setSelectedPayouts((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
+  const undoBulk = async (snapshot: Array<{ id: string; status: string; paid_at: string | null }>) => {
+    // Restore each row's prior status/paid_at. Small batch — N updates.
+    const results = await Promise.all(
+      snapshot.map((s) =>
+        supabase.from("payouts").update({ status: s.status, paid_at: s.paid_at }).eq("id", s.id),
+      ),
+    );
+    const failed = results.filter((r) => r.error).length;
+    if (failed > 0) toast.error(`Undo partially failed (${failed}/${snapshot.length})`);
+    else toast.success(`Reverted ${snapshot.length} payout${snapshot.length === 1 ? "" : "s"}`);
+    load();
+  };
+
   const bulkPayoutAction = async (paid: boolean) => {
     const ids = Array.from(selectedPayouts);
     if (ids.length === 0) return;
     const verb = paid ? `mark ${ids.length} payout(s) as paid` : `reject ${ids.length} payout(s)`;
     if (!confirm(`Confirm: ${verb}?`)) return;
+
+    // Snapshot prior state of only the rows we'll actually change (status === pending)
+    const target = payouts.filter((p) => ids.includes(p.id) && p.status === "pending");
+    const snapshot = target.map((p) => ({ id: p.id, status: p.status, paid_at: p.paid_at ?? null }));
+
     setPayoutBulkRunning(true);
     const { error } = await supabase.from("payouts").update({
       status: paid ? "paid" : "rejected",
@@ -70,9 +88,22 @@ const AdminPayouts = () => {
     }).in("id", ids).eq("status", "pending");
     setPayoutBulkRunning(false);
     if (error) return toast.error(error.message);
-    toast.success(`${paid ? "Marked paid" : "Rejected"}: ${ids.length}`);
+
     setSelectedPayouts(new Set());
     load();
+
+    if (snapshot.length === 0) {
+      toast.message("No pending payouts were affected");
+      return;
+    }
+
+    toast.success(`${paid ? "Marked paid" : "Rejected"}: ${snapshot.length}`, {
+      duration: 10000,
+      action: {
+        label: "Undo",
+        onClick: () => undoBulk(snapshot),
+      },
+    });
   };
 
   const updateSeller = async (id: string, patch: Record<string, unknown>) => {
