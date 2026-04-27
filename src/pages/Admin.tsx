@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { AppShell } from "@/components/AppShell";
+import { AdminLayout } from "@/components/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -200,12 +200,8 @@ const Admin = () => {
   };
 
   return (
-    <AppShell>
+    <AdminLayout title="Control Center">
       <div className="space-y-6">
-        <div className="flex items-center gap-3">
-          <Shield className="h-8 w-8 text-primary-glow" />
-          <h1 className="font-display text-3xl font-black neon-text">ADMIN CONTROL CENTER</h1>
-        </div>
 
         {/* STATS */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -429,7 +425,7 @@ const Admin = () => {
           <Button onClick={postAnnouncement} className="mt-3 bg-gradient-primary shadow-neon">Post</Button>
         </Section>
       </div>
-    </AppShell>
+    </AdminLayout>
   );
 };
 
