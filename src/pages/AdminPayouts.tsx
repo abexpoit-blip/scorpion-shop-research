@@ -121,11 +121,45 @@ const AdminPayouts = () => {
           </div>
         </div>
 
+        {tab === "pending" && pending.length > 0 && (
+          <div className="mb-3 flex items-center gap-3 flex-wrap">
+            <label className="inline-flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+              <input
+                type="checkbox"
+                checked={selectedPayouts.size === pending.length}
+                ref={(el) => { if (el) el.indeterminate = selectedPayouts.size > 0 && selectedPayouts.size < pending.length; }}
+                onChange={() => setSelectedPayouts(selectedPayouts.size === pending.length ? new Set() : new Set(pending.map((p) => p.id)))}
+                className="accent-primary cursor-pointer"
+              />
+              Select all pending ({pending.length})
+            </label>
+            {selectedPayouts.size > 0 && (
+              <div className="flex items-center gap-2 flex-wrap ml-auto">
+                <span className="text-xs text-primary-glow font-display">
+                  {selectedPayouts.size} selected · ${pending.filter((p) => selectedPayouts.has(p.id)).reduce((s, p) => s + Number(p.amount), 0).toFixed(2)}
+                </span>
+                <Button size="sm" disabled={payoutBulkRunning} onClick={() => bulkPayoutAction(true)} className="bg-success text-white">
+                  <Check className="h-3.5 w-3.5 mr-1" />Mark all paid
+                </Button>
+                <Button size="sm" disabled={payoutBulkRunning} variant="destructive" onClick={() => bulkPayoutAction(false)}>
+                  <X className="h-3.5 w-3.5 mr-1" />Reject all
+                </Button>
+                <button onClick={() => setSelectedPayouts(new Set())} className="text-xs text-muted-foreground hover:text-foreground">Clear</button>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="space-y-2">
           {(tab === "pending" ? pending : history).map((p) => {
             const u = users.find((x) => x.id === p.seller_id);
             return (
-              <div key={p.id} className="flex items-center justify-between gap-2 p-3 rounded-lg bg-secondary/40 border border-border/40 flex-wrap">
+              <div key={p.id} className={`flex items-center gap-2 p-3 rounded-lg border flex-wrap transition ${
+                selectedPayouts.has(p.id) ? "bg-primary/10 border-primary/40" : "bg-secondary/40 border-border/40"
+              }`}>
+                {p.status === "pending" && (
+                  <input type="checkbox" checked={selectedPayouts.has(p.id)} onChange={() => togglePayout(p.id)} className="accent-primary cursor-pointer" />
+                )}
                 <div className="min-w-0 flex-1">
                   <p className="font-display">
                     ${Number(p.amount).toFixed(2)} · <span className="text-primary-glow">{p.method}</span>
