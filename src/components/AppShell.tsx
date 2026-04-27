@@ -202,6 +202,21 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
               </div>
             </NavLink>
 
+            {canSell && (
+              <button
+                onClick={() => {
+                  const next = effectiveRole === "seller" ? "buyer" : "seller";
+                  setActiveRole(next);
+                  nav(next === "seller" ? "/seller" : "/");
+                }}
+                className="nav-icon-btn hidden md:inline-flex"
+                title={`Switch to ${effectiveRole === "seller" ? "buyer" : "seller"} mode`}
+                aria-label={`Switch to ${effectiveRole === "seller" ? "buyer" : "seller"} mode`}
+              >
+                <Repeat className="nav-icon" strokeWidth={1.75} />
+              </button>
+            )}
+
             <button onClick={async () => { await signOut(); nav("/auth"); }}
               className="nav-icon-btn nav-icon-btn-danger hidden md:inline-flex" aria-label="Sign out">
               <LogOut className="nav-icon" strokeWidth={1.75} />
