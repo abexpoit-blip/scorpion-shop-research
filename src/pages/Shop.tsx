@@ -212,8 +212,17 @@ const Shop = () => {
                       <PackageX className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
                       <p className="font-display text-lg text-foreground">Not stocked yet</p>
                       <p className="text-sm text-muted-foreground mt-1">
-                        {bin ? `BIN "${bin}" is not in stock right now.` : "No cards match your filters."} Try a different BIN or check back later.
+                        {lastBin
+                          ? <>No cards match BIN prefix <code className="px-1.5 py-0.5 rounded bg-secondary/60 text-primary-glow font-mono">{lastBin}</code>{lastBin.length >= 6 && <> ({lastBin.length} digits)</>}.</>
+                          : "No cards match your filters."}
+                        <br />Try a different BIN or check back later.
                       </p>
+                      {(lastBin || base !== "all" || country || zip) && (
+                        <Button onClick={() => { setBin(""); setBase("all"); setCountry(""); setZip(""); setSearched(false); setTimeout(() => load(true), 0); }}
+                          variant="outline" className="mt-4 border-primary/40 text-primary-glow hover:bg-primary/10">
+                          <X className="h-4 w-4 mr-1.5" />Clear search
+                        </Button>
+                      )}
                     </td>
                   </tr>
                 )}
