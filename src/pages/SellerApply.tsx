@@ -40,7 +40,7 @@ const SellerApply = () => {
   const submit = async () => {
     if (!user) return;
     if (!form.telegram && !form.jabber) return toast.error("Provide at least Telegram or Jabber");
-    const { error } = await supabase.from("seller_applications").insert({ user_id: user.id, ...form, status: "pending" });
+    const { error } = await (supabase.from("seller_applications") as any).insert({ user_id: user.id, ...form, status: "pending" });
     if (error) return toast.error(error.message);
     toast.success("Application submitted — admin will review shortly");
     setForm({ telegram: "", jabber: "", expected_volume: "", sample_bins: "", message: "" });
