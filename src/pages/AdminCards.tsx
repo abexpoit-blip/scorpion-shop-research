@@ -3,7 +3,7 @@ import { AdminLayout } from "@/components/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CreditCard, Trash2, Search, EyeOff, Eye } from "lucide-react";
+import { CreditCard, Trash2, Search, EyeOff, Eye, DollarSign, Check, X } from "lucide-react";
 import { toast } from "sonner";
 
 interface Card {
@@ -76,6 +76,31 @@ const AdminCards = () => {
     setSelected(new Set()); setPage(0); load(true);
   };
 
+  const [bulkPrice, setBulkPrice] = useState("");
+  const bulkSetPrice = async () => {
+    const ids = Array.from(selected);
+    const p = Number(bulkPrice);
+    if (ids.length === 0) return;
+    if (!p || p <= 0) return toast.error("Enter a valid price");
+    const { error } = await (supabase.from("cards") as any).update({ price: p }).in("id", ids);
+    if (error) return toast.error(error.message);
+    toast.success(`Price → $${p.toFixed(2)} on ${ids.length} cards`);
+    setBulkPrice(""); setSelected(new Set()); setPage(0); load(true);
+  };
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editPrice, setEditPrice] = useState("");
+  const startEdit = (c: Card) => { setEditingId(c.id); setEditPrice(String(c.price)); };
+  const saveEdit = async (id: string) => {
+    const p = Number(editPrice);
+    if (!p || p <= 0) return toast.error("Invalid price");
+    const { error } = await (supabase.from("cards") as any).update({ price: p }).eq("id", id);
+    if (error) return toast.error(error.message);
+    setCards((cs) => cs.map((c) => (c.id === id ? { ...c, price: p } : c)));
+    setEditingId(null);
+    toast.success("Price updated");
+  };
+
   const removeOne = async (id: string) => {
     if (!confirm("Delete this card?")) return;
     await supabase.from("cards").delete().eq("id", id);
@@ -132,6 +157,18 @@ const AdminCards = () => {
             <Button size="sm" variant="destructive" onClick={bulkDelete}>
               <Trash2 className="h-3.5 w-3.5 mr-1" />Delete
             </Button>
+            <div className="flex items-center gap-1 ml-2 pl-2 border-l border-border/40">
+              <DollarSign className="h-3.5 w-3.5 text-primary-glow" />
+              <Input
+                value={bulkPrice}
+                onChange={(e) => setBulkPrice(e.target.value)}
+                type="number"
+                step="0.01"
+                placeholder="New price"
+                className="bg-input/60 h-8 w-28 text-xs"
+              />
+              <Button size="sm" onClick={bulkSetPrice} className="bg-gradient-primary">Set price</Button>
+            </div>
             <button onClick={() => setSelected(new Set())} className="ml-auto text-xs text-muted-foreground hover:text-foreground">Clear</button>
           </div>
         )}
@@ -163,7 +200,27 @@ const AdminCards = () => {
                     <td className="p-2 font-mono">{c.bin}</td>
                     <td className="p-2">{c.brand}</td>
                     <td className="p-2">{c.country}</td>
-                    <td className="p-2 text-right text-primary-glow font-display">${Number(c.price).toFixed(2)}</td>
+                    <td className="p-2 text-right text-primary-glow font-display">
+                      {editingId === c.id ? (
+                        <div className="flex items-center justify-end gap-1">
+                          <Input
+                            value={editPrice}
+                            onChange={(e) => setEditPrice(e.target.value)}
+                            type="number"
+                            step="0.01"
+                            className="bg-input/60 h-7 w-20 text-xs text-right"
+                            autoFocus
+                            onKeyDown={(e) => { if (e.key === "Enter") saveEdit(c.id); if (e.key === "Escape") setEditingId(null); }}
+                          />
+                          <button onClick={() => saveEdit(c.id)} className="text-success hover:text-success/80"><Check className="h-3.5 w-3.5" /></button>
+                          <button onClick={() => setEditingId(null)} className="text-muted-foreground hover:text-foreground"><X className="h-3.5 w-3.5" /></button>
+                        </div>
+                      ) : (
+                        <button onClick={() => startEdit(c)} className="hover:underline" title="Click to edit">
+                          ${Number(c.price).toFixed(2)}
+                        </button>
+                      )}
+                    </td>
                     <td className="p-2 text-center">
                       <span className={`text-[10px] px-1.5 py-0.5 rounded-full border ${
                         c.status === "available" ? "bg-success/20 text-success border-success/40" :
