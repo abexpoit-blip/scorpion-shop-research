@@ -252,6 +252,16 @@ const Auth = () => {
               </div>
             )}
 
+            {safeFrom && (
+              <div className="mb-4 rounded-lg border border-gold/40 bg-gold/10 px-3 py-2.5 text-xs text-gold flex items-start gap-2" role="status">
+                <ArrowRight className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                <div>
+                  <div className="font-semibold">Redirecting to your original page</div>
+                  <div className="opacity-80 mt-0.5 font-mono break-all">After sign-in we'll take you to <span className="underline">{safeFrom}</span></div>
+                </div>
+              </div>
+            )}
+
             {statusBanner && (
               <div className={`mb-4 rounded-lg border px-3 py-2.5 text-xs ${
                 statusBanner.kind === "error"
