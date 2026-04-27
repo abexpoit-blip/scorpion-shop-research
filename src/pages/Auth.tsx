@@ -61,8 +61,8 @@ const Auth = () => {
           },
         });
         if (error) throw error;
-        toast.success("Account created — entering the den…");
-        nav("/");
+        toast.success(role === "seller" ? "Account created — apply to become a seller next" : "Account created — entering the den…");
+        nav(role === "seller" ? "/seller/apply" : "/");
       } else {
         const loginEmail = username.includes("@") ? username : `${username.toLowerCase()}@cruzercc.shop`;
         const { error } = await supabase.auth.signInWithPassword({
