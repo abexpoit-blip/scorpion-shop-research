@@ -765,6 +765,28 @@ export type Database = {
         }
         Returns: boolean
       }
+      list_available_cards: {
+        Args: never
+        Returns: {
+          base: string
+          bin: string
+          brand: string
+          city: string
+          country: string
+          created_at: string
+          exp_month: string
+          exp_year: string
+          has_email: boolean
+          has_phone: boolean
+          id: string
+          price: number
+          refundable: boolean
+          seller_id: string
+          state: string
+          status: string
+          zip: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "seller" | "user"
