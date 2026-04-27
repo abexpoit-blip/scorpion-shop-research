@@ -29,6 +29,8 @@ const SellerUpload = () => {
   const [busy, setBusy] = useState(false);
   const [defaultPrice, setDefaultPrice] = useState("1.50");
   const [refundable, setRefundable] = useState(false);
+  const [autoFixOnPublish, setAutoFixOnPublish] = useState(true);
+  const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">("desktop");
   const [rules, setRules] = useState<PriceRule[]>([]);
   const [newRule, setNewRule] = useState({ country: "", brand: "", refundable: "any", price: "" });
 
