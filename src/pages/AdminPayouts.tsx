@@ -214,7 +214,70 @@ const AdminPayouts = () => {
           </div>
         </div>
 
-        {tab === "pending" && pending.length > 0 && (
+        {/* Filters & sorting */}
+        <div className="mb-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
+          <div className="relative lg:col-span-2">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input value={payoutQuery} onChange={(e) => setPayoutQuery(e.target.value)}
+              placeholder="Search seller, method, address…" className="bg-input/60 pl-9" />
+          </div>
+          <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
+            <SelectTrigger className="bg-input/60"><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="paid">Paid</SelectItem>
+              <SelectItem value="rejected">Rejected</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={sellerFilter} onValueChange={setSellerFilter}>
+            <SelectTrigger className="bg-input/60"><SelectValue placeholder="Seller" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All sellers</SelectItem>
+              {payoutSellers.map((s) => (
+                <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <div className="flex gap-2 items-center">
+            <label className="text-[10px] uppercase tracking-wider text-muted-foreground shrink-0">From</label>
+            <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="bg-input/60" />
+          </div>
+          <div className="flex gap-2 items-center">
+            <label className="text-[10px] uppercase tracking-wider text-muted-foreground shrink-0">To</label>
+            <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="bg-input/60" />
+          </div>
+          <div className="flex gap-2 items-center">
+            <label className="text-[10px] uppercase tracking-wider text-muted-foreground shrink-0">Min&nbsp;$</label>
+            <Input type="number" step="0.01" min="0" value={minAmount} onChange={(e) => setMinAmount(e.target.value)} className="bg-input/60" />
+          </div>
+          <div className="flex gap-2 items-center">
+            <label className="text-[10px] uppercase tracking-wider text-muted-foreground shrink-0">Max&nbsp;$</label>
+            <Input type="number" step="0.01" min="0" value={maxAmount} onChange={(e) => setMaxAmount(e.target.value)} className="bg-input/60" />
+          </div>
+
+          <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
+            <SelectTrigger className="bg-input/60">
+              <ArrowUpDown className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="created_desc">Newest first</SelectItem>
+              <SelectItem value="created_asc">Oldest first</SelectItem>
+              <SelectItem value="amount_desc">Amount high → low</SelectItem>
+              <SelectItem value="amount_asc">Amount low → high</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {filtersActive && (
+            <Button variant="outline" onClick={resetFilters} className="lg:col-span-1">
+              <RotateCcw className="h-3.5 w-3.5 mr-1" />Reset filters
+            </Button>
+          )}
+        </div>
+
+
           <div className="mb-3 flex items-center gap-3 flex-wrap">
             <label className="inline-flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
               <input
