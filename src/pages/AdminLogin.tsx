@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { ShieldAlert, Lock, KeyRound, Loader2 } from "lucide-react";
 import { describeAuthError } from "@/lib/authErrors";
+import { ForgotPasswordDialog } from "@/components/ForgotPasswordDialog";
 
 const ADMIN_EMAIL = "samexpoit@gmail.com";
 const ADMIN_USERNAME = "admin@cruzercc";
@@ -32,6 +33,7 @@ const AdminLogin = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [bootstrapping, setBootstrapping] = useState(false);
+  const [forgotOpen, setForgotOpen] = useState(false);
 
   useEffect(() => {
     document.title = "Admin · Secure Console";
@@ -115,6 +117,13 @@ const AdminLogin = () => {
             </button>
           </form>
 
+          <div className="mt-4 text-center">
+            <button type="button" onClick={() => setForgotOpen(true)}
+              className="text-xs text-muted-foreground hover:text-primary-glow underline-offset-4 hover:underline">
+              Forgot admin password?
+            </button>
+          </div>
+
           <div className="mt-6 pt-6 border-t border-border/40 text-center">
             <p className="text-[10px] text-muted-foreground mb-2">First-time setup? Provision the admin account from configured secrets.</p>
             <button type="button" onClick={provision} disabled={bootstrapping}
@@ -123,6 +132,13 @@ const AdminLogin = () => {
             </button>
           </div>
         </div>
+
+        <ForgotPasswordDialog
+          open={forgotOpen}
+          onOpenChange={setForgotOpen}
+          defaultEmail={identifier.includes("@") ? identifier : ""}
+          redirectPath="/admin/reset-password"
+        />
 
         <p className="text-center text-[9px] font-mono tracking-[0.3em] text-muted-foreground mt-5">
           UNAUTHORIZED ACCESS LOGGED · IP MONITORED
