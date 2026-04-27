@@ -19,8 +19,21 @@ const Cart = () => {
   const load = async () => {
     if (!user) return;
     const { data } = await supabase.from("cart_items")
-      .select("id, card:cards(*)").eq("user_id", user.id);
-    const list = (data ?? []).filter((x: { card: Card | null }) => x.card) as Item[];
+      .select("id, card_id").eq("user_id", user.id);
+    const rows = (data ?? []) as { id: string; card_id: string }[];
+    const ids = rows.map((r) => r.card_id);
+    let cards: Card[] = [];
+    if (ids.length) {
+      const { data: cardRows } = await supabase
+        .from("cards_public" as never)
+        .select("id,bin,brand,country,price,base,exp_month,exp_year")
+        .in("id", ids);
+      cards = (cardRows ?? []) as Card[];
+    }
+    const cardMap = new Map(cards.map((c) => [c.id, c]));
+    const list: Item[] = rows
+      .map((r) => ({ id: r.id, card: cardMap.get(r.card_id) }))
+      .filter((x): x is Item => !!x.card);
     setItems(list);
     setSelected(new Set(list.map((i) => i.id)));
   };
