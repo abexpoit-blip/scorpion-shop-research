@@ -20,6 +20,13 @@ type Role = "buyer" | "seller";
 
 const Auth = () => {
   const nav = useNavigate();
+  const loc = useLocation();
+  // Where to send the user after a successful sign-in. Falls back to /shop so
+  // they never get bounced back to /auth.
+  const fromPath = (loc.state as { from?: { pathname?: string } } | null)?.from?.pathname;
+  const safeFrom = fromPath && !fromPath.startsWith("/auth") && !fromPath.startsWith("/admin-login")
+    ? fromPath
+    : null;
   const [role, setRole] = useState<Role>("buyer");
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [username, setUsername] = useState("");
