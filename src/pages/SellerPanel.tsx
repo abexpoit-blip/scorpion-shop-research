@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { BRANDS, COUNTRIES, BrandLogo, countryFlag } from "@/lib/brands";
-import { Plus, Trash2, Upload, DollarSign, TrendingUp, Package, CheckCircle2, Wallet, Clock, Percent, PiggyBank, BadgeCheck } from "lucide-react";
+import { Plus, Trash2, Upload, DollarSign, TrendingUp, Package, CheckCircle2, Wallet, Clock, Percent, PiggyBank, BadgeCheck, Check, X } from "lucide-react";
 import { toast } from "sonner";
 
 interface CardRow { id: string; bin: string; brand: string; country: string; price: number; status: string; base: string; created_at: string; }
@@ -97,6 +97,54 @@ const SellerPanel = () => {
   const remove = async (id: string) => {
     await supabase.from("cards").delete().eq("id", id);
     load();
+  };
+
+  // ─── inline + bulk price editing ───
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editPrice, setEditPrice] = useState("");
+  const [bulkPrice, setBulkPrice] = useState("");
+
+  const toggleOne = (id: string) =>
+    setSelected((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const allSelected = cards.length > 0 && cards.every((c) => selected.has(c.id));
+  const toggleAll = () =>
+    setSelected((s) => {
+      const n = new Set(s);
+      if (allSelected) cards.forEach((c) => n.delete(c.id));
+      else cards.forEach((c) => n.add(c.id));
+      return n;
+    });
+
+  const saveEdit = async (id: string) => {
+    const p = Number(editPrice);
+    if (!p || p <= 0) return toast.error("Invalid price");
+    const { error } = await (supabase.from("cards") as any).update({ price: p }).eq("id", id);
+    if (error) return toast.error(error.message);
+    setCards((cs) => cs.map((c) => (c.id === id ? { ...c, price: p } : c)));
+    setEditingId(null);
+    toast.success("Price updated");
+  };
+
+  const bulkUpdatePrice = async () => {
+    const ids = Array.from(selected);
+    const p = Number(bulkPrice);
+    if (ids.length === 0) return toast.error("Select cards first");
+    if (!p || p <= 0) return toast.error("Enter a valid price");
+    const { error } = await (supabase.from("cards") as any).update({ price: p }).in("id", ids);
+    if (error) return toast.error(error.message);
+    toast.success(`Updated price on ${ids.length} cards`);
+    setBulkPrice(""); setSelected(new Set()); load();
+  };
+
+  const bulkDelete = async () => {
+    const ids = Array.from(selected);
+    if (ids.length === 0) return;
+    if (!confirm(`Delete ${ids.length} cards?`)) return;
+    const { error } = await supabase.from("cards").delete().in("id", ids);
+    if (error) return toast.error(error.message);
+    toast.success(`Deleted ${ids.length}`);
+    setSelected(new Set()); load();
   };
 
   const requestPayout = async () => {
