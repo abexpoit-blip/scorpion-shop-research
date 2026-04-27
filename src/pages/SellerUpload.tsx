@@ -8,8 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BRANDS } from "@/lib/brands";
 import { parseAndFormat, dedupe, detectBrand, ParsedCard } from "@/lib/cardFormatter";
-import { Upload, FileText, Wand2, Trash2, Plus, CheckCircle2, AlertTriangle, Sparkles } from "lucide-react";
+import { Upload, FileText, Wand2, Trash2, Plus, CheckCircle2, AlertTriangle, Sparkles, Eye, Store, BadgeCheck } from "lucide-react";
 import { toast } from "sonner";
+
+const countryFlag = (cc: string) => {
+  if (!cc || cc.length !== 2) return "";
+  return String.fromCodePoint(...[...cc.toUpperCase()].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65));
+};
 
 interface PriceRule {
   id: string; country: string | null; brand: string | null;
@@ -24,6 +29,8 @@ const SellerUpload = () => {
   const [busy, setBusy] = useState(false);
   const [defaultPrice, setDefaultPrice] = useState("1.50");
   const [refundable, setRefundable] = useState(false);
+  const [autoFixOnPublish, setAutoFixOnPublish] = useState(true);
+  const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">("desktop");
   const [rules, setRules] = useState<PriceRule[]>([]);
   const [newRule, setNewRule] = useState({ country: "", brand: "", refundable: "any", price: "" });
 
@@ -61,15 +68,32 @@ const SellerUpload = () => {
   };
 
   const publish = async () => {
-    if (!user || parsed.length === 0) return;
+    if (!user) return;
+
+    // Auto-fix sweep right before publish: re-parse raw + re-dedupe so nothing
+    // dirty slips into the shop, even if the seller edited after the last preview.
+    let toPublish = parsed;
+    if (autoFixOnPublish) {
+      const source = raw.trim() ? raw : parsed.map((p) => Object.values(p).join("|")).join("\n");
+      const { lines, failed: f } = parseAndFormat(source);
+      const { unique, dropped } = dedupe(lines);
+      toPublish = unique;
+      setParsed(unique);
+      setFailed(f);
+      if (dropped > 0 || f.length > 0) {
+        toast.message(`Auto-fix swept input: ${unique.length} clean, ${dropped} duplicates, ${f.length} unparseable`);
+      }
+    }
+
+    if (toPublish.length === 0) { toast.error("Nothing to publish"); return; }
     setBusy(true);
 
     // Dedupe against existing stock by cc_number
-    const numbers = parsed.map((p) => p.cc);
+    const numbers = toPublish.map((p) => p.cc);
     const { data: existing } = await supabase.from("cards").select("cc_number").in("cc_number", numbers);
     const existingSet = new Set((existing ?? []).map((c: { cc_number: string | null }) => c.cc_number));
-    const fresh = parsed.filter((p) => !existingSet.has(p.cc));
-    const skipped = parsed.length - fresh.length;
+    const fresh = toPublish.filter((p) => !existingSet.has(p.cc));
+    const skipped = toPublish.length - fresh.length;
 
     const rows = fresh.map((p) => {
       const brand = detectBrand(p.cc);
@@ -99,7 +123,7 @@ const SellerUpload = () => {
     });
 
     if (rows.length === 0) {
-      toast.warning(`All ${parsed.length} cards are already in stock`);
+      toast.warning(`All ${toPublish.length} cards are already in stock`);
       setBusy(false); return;
     }
 
@@ -191,28 +215,48 @@ const SellerUpload = () => {
         </section>
 
         {/* Default settings */}
-        <section className="glass rounded-2xl p-6 grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
-          <div>
-            <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Default price ($)</label>
-            <Input type="number" step="0.01" value={defaultPrice} onChange={(e) => setDefaultPrice(e.target.value)} className="bg-input/60 mt-1" />
+        <section className="glass rounded-2xl p-6 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+            <div>
+              <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Default price ($)</label>
+              <Input type="number" step="0.01" value={defaultPrice} onChange={(e) => setDefaultPrice(e.target.value)} className="bg-input/60 mt-1" />
+            </div>
+            <div>
+              <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Refundable</label>
+              <Select value={refundable ? "yes" : "no"} onValueChange={(v) => setRefundable(v === "yes")}>
+                <SelectTrigger className="bg-input/60 mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="no">Non-refundable</SelectItem>
+                  <SelectItem value="yes">Refundable</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <label className="cursor-pointer">
+              <input type="file" accept=".txt,.csv,.tsv" className="hidden" onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
+              <div className="flex items-center justify-center h-10 px-4 rounded-md border-2 border-dashed border-primary/40 hover:border-primary text-sm text-primary-glow hover:bg-primary/5 transition">
+                <FileText className="h-4 w-4 mr-2" />Drop .txt / .csv file
+              </div>
+            </label>
           </div>
-          <div>
-            <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Refundable</label>
-            <Select value={refundable ? "yes" : "no"} onValueChange={(v) => setRefundable(v === "yes")}>
-              <SelectTrigger className="bg-input/60 mt-1"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="no">Non-refundable</SelectItem>
-                <SelectItem value="yes">Refundable</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <label className="cursor-pointer">
-            <input type="file" accept=".txt,.csv,.tsv" className="hidden" onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
-            <div className="flex items-center justify-center h-10 px-4 rounded-md border-2 border-dashed border-primary/40 hover:border-primary text-sm text-primary-glow hover:bg-primary/5 transition">
-              <FileText className="h-4 w-4 mr-2" />Drop .txt / .csv file
+          <label className="flex items-start gap-3 p-3 rounded-lg bg-secondary/30 border border-border/40 cursor-pointer hover:bg-secondary/50 transition">
+            <input
+              type="checkbox"
+              checked={autoFixOnPublish}
+              onChange={(e) => setAutoFixOnPublish(e.target.checked)}
+              className="mt-0.5 accent-primary cursor-pointer"
+            />
+            <div className="flex-1">
+              <div className="flex items-center gap-2 text-sm font-display tracking-wider text-primary-glow">
+                <Wand2 className="h-3.5 w-3.5" /> AUTO-FIX BEFORE PUBLISH
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Re-runs the format fixer + dedupe right before saving so every card is normalized to the canonical
+                shop format (cc|month|year|cvv|name|addr|city|state|zip|country|tel|email). Strongly recommended.
+              </p>
             </div>
           </label>
         </section>
+
 
         {/* Paste box */}
         <section className="glass-neon rounded-2xl p-6 space-y-3">
@@ -244,6 +288,80 @@ const SellerUpload = () => {
                 {previewLines.map((c) => Object.values(c).join("|")).join("\n")}
                 {parsed.length > 10 && `\n… and ${parsed.length - 10} more`}
               </pre>
+            </div>
+
+            {/* Shop layout preview — exactly how cleaned fields appear after publish */}
+            <div className="pt-4 border-t border-border/40">
+              <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                <div className="flex items-center gap-2">
+                  <Eye className="h-4 w-4 text-primary-glow" />
+                  <h3 className="font-display tracking-wider text-primary-glow text-sm">SHOP PREVIEW</h3>
+                  <span className="text-[10px] text-muted-foreground">how buyers will see it</span>
+                </div>
+                <div className="inline-flex rounded-md border border-border/60 overflow-hidden text-[11px]">
+                  <button
+                    onClick={() => setPreviewMode("desktop")}
+                    className={`px-3 py-1 transition ${previewMode === "desktop" ? "bg-primary/20 text-primary-glow" : "text-muted-foreground hover:bg-secondary/40"}`}
+                  >Desktop</button>
+                  <button
+                    onClick={() => setPreviewMode("mobile")}
+                    className={`px-3 py-1 transition ${previewMode === "mobile" ? "bg-primary/20 text-primary-glow" : "text-muted-foreground hover:bg-secondary/40"}`}
+                  >Mobile (375px)</button>
+                </div>
+              </div>
+
+              <div className={`mx-auto transition-all ${previewMode === "mobile" ? "max-w-[375px] border-x border-border/40 rounded-xl" : "w-full"}`}>
+                <div className="overflow-x-auto rounded-lg border border-border/40 bg-background/60">
+                  <table className="w-full text-xs">
+                    <thead className="bg-secondary/40 text-[10px] uppercase tracking-wider text-muted-foreground">
+                      <tr>
+                        <th className="p-2 text-left">bin</th>
+                        <th className="p-2">refund</th>
+                        <th className="p-2">mm/yy</th>
+                        <th className="p-2">city</th>
+                        <th className="p-2">state</th>
+                        <th className="p-2">zip</th>
+                        <th className="p-2">country</th>
+                        <th className="p-2">tel</th>
+                        <th className="p-2">email</th>
+                        <th className="p-2">price</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {previewLines.map((c, i) => {
+                        const brand = detectBrand(c.cc);
+                        const country = c.country !== "null" ? c.country.toUpperCase() : "US";
+                        const price = matchPrice(brand, country);
+                        return (
+                          <tr key={i} className={`border-t border-border/40 ${i % 2 ? "bg-secondary/10" : ""}`}>
+                            <td className="p-2 font-mono whitespace-nowrap">
+                              <div>{c.cc.slice(0, 6)}<span className="text-muted-foreground">********</span></div>
+                              <span className="mt-1 inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded-full bg-primary/10 border border-primary/30 text-primary-glow">
+                                <Store className="h-2.5 w-2.5" />you
+                                <BadgeCheck className="h-2.5 w-2.5" />
+                              </span>
+                            </td>
+                            <td className="p-2 text-center text-muted-foreground">{refundable ? "YES" : "NO"}</td>
+                            <td className="p-2 text-center font-mono">{c.month !== "null" ? c.month : "—"}/{c.year !== "null" ? c.year : "—"}</td>
+                            <td className="p-2 text-center max-w-[100px] truncate" title={c.city}>{c.city !== "null" ? c.city : "—"}</td>
+                            <td className="p-2 text-center">{c.state !== "null" ? c.state : "—"}</td>
+                            <td className="p-2 text-center font-mono">{c.zip !== "null" ? c.zip : "—"}</td>
+                            <td className="p-2 text-center whitespace-nowrap">{countryFlag(country)} {country}</td>
+                            <td className="p-2 text-center text-[10px]">{c.tel !== "null" ? <span className="text-success">yes</span> : <span className="text-muted-foreground">no</span>}</td>
+                            <td className="p-2 text-center text-[10px]">{c.email !== "null" ? <span className="text-success">yes</span> : <span className="text-muted-foreground">no</span>}</td>
+                            <td className="p-2 text-center font-display text-primary-glow">{price.toFixed(2)}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+                {parsed.length > previewLines.length && (
+                  <p className="text-[10px] text-muted-foreground text-center mt-2">
+                    Showing first {previewLines.length} of {parsed.length} — all rows will look like these.
+                  </p>
+                )}
+              </div>
             </div>
           </section>
         )}
