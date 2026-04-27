@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import logo from "@/assets/panther-logo.png";
 import { Button } from "@/components/ui/button";
 import { BuildBadge } from "@/components/BuildBadge";
+import { verifyAdminAccess } from "@/lib/adminAccess";
 
 type Density = "comfortable" | "compact";
 
@@ -317,8 +318,46 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
 
 export const AdminRoute = ({ children }: { children: ReactNode }) => {
   const { roles, loading, user } = useAuth();
+  const [verifiedAdmin, setVerifiedAdmin] = useState(false);
+  const [checkingAdmin, setCheckingAdmin] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    if (!user || roles.includes("admin")) {
+      setVerifiedAdmin(false);
+      setCheckingAdmin(false);
+      return;
+    }
+
+    setCheckingAdmin(true);
+    verifyAdminAccess(user.id)
+      .then((isAdmin) => {
+        if (active) {
+          setVerifiedAdmin(isAdmin);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setVerifiedAdmin(false);
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setCheckingAdmin(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [roles, user]);
+
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading…</div>;
-  if (!user || !roles.includes("admin"))
+  if (user && !roles.includes("admin") && checkingAdmin) {
+    return <div className="min-h-screen flex items-center justify-center">Checking admin access…</div>;
+  }
+  if (!user || (!roles.includes("admin") && !verifiedAdmin))
     return <div className="p-8"><Button onClick={() => history.back()}>Go back</Button><p className="mt-4">Admin access required.</p></div>;
   return <>{children}</>;
 };
