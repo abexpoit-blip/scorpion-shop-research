@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Lock, User as UserIcon, Mail, ShieldCheck, Zap, Crown, Users as UsersIcon, X } from "lucide-react";
+import { Lock, User as UserIcon, Mail, ShieldCheck, Zap, Crown, Users as UsersIcon, X, ArrowRight } from "lucide-react";
 import logo from "@/assets/panther-logo.png";
 import { getSavedAccounts, removeSavedAccount, type SavedAccount } from "@/lib/accountSwitcher";
 import { setActiveRole } from "@/lib/activeRole";
@@ -248,6 +248,16 @@ const Auth = () => {
                       </button>
                     </button>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {safeFrom && (
+              <div className="mb-4 rounded-lg border border-gold/40 bg-gold/10 px-3 py-2.5 text-xs text-gold flex items-start gap-2" role="status">
+                <ArrowRight className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                <div>
+                  <div className="font-semibold">Redirecting to your original page</div>
+                  <div className="opacity-80 mt-0.5 font-mono break-all">After sign-in we'll take you to <span className="underline">{safeFrom}</span></div>
                 </div>
               </div>
             )}
