@@ -215,28 +215,48 @@ const SellerUpload = () => {
         </section>
 
         {/* Default settings */}
-        <section className="glass rounded-2xl p-6 grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
-          <div>
-            <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Default price ($)</label>
-            <Input type="number" step="0.01" value={defaultPrice} onChange={(e) => setDefaultPrice(e.target.value)} className="bg-input/60 mt-1" />
+        <section className="glass rounded-2xl p-6 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+            <div>
+              <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Default price ($)</label>
+              <Input type="number" step="0.01" value={defaultPrice} onChange={(e) => setDefaultPrice(e.target.value)} className="bg-input/60 mt-1" />
+            </div>
+            <div>
+              <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Refundable</label>
+              <Select value={refundable ? "yes" : "no"} onValueChange={(v) => setRefundable(v === "yes")}>
+                <SelectTrigger className="bg-input/60 mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="no">Non-refundable</SelectItem>
+                  <SelectItem value="yes">Refundable</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <label className="cursor-pointer">
+              <input type="file" accept=".txt,.csv,.tsv" className="hidden" onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
+              <div className="flex items-center justify-center h-10 px-4 rounded-md border-2 border-dashed border-primary/40 hover:border-primary text-sm text-primary-glow hover:bg-primary/5 transition">
+                <FileText className="h-4 w-4 mr-2" />Drop .txt / .csv file
+              </div>
+            </label>
           </div>
-          <div>
-            <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Refundable</label>
-            <Select value={refundable ? "yes" : "no"} onValueChange={(v) => setRefundable(v === "yes")}>
-              <SelectTrigger className="bg-input/60 mt-1"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="no">Non-refundable</SelectItem>
-                <SelectItem value="yes">Refundable</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <label className="cursor-pointer">
-            <input type="file" accept=".txt,.csv,.tsv" className="hidden" onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
-            <div className="flex items-center justify-center h-10 px-4 rounded-md border-2 border-dashed border-primary/40 hover:border-primary text-sm text-primary-glow hover:bg-primary/5 transition">
-              <FileText className="h-4 w-4 mr-2" />Drop .txt / .csv file
+          <label className="flex items-start gap-3 p-3 rounded-lg bg-secondary/30 border border-border/40 cursor-pointer hover:bg-secondary/50 transition">
+            <input
+              type="checkbox"
+              checked={autoFixOnPublish}
+              onChange={(e) => setAutoFixOnPublish(e.target.checked)}
+              className="mt-0.5 accent-primary cursor-pointer"
+            />
+            <div className="flex-1">
+              <div className="flex items-center gap-2 text-sm font-display tracking-wider text-primary-glow">
+                <Wand2 className="h-3.5 w-3.5" /> AUTO-FIX BEFORE PUBLISH
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Re-runs the format fixer + dedupe right before saving so every card is normalized to the canonical
+                shop format (cc|month|year|cvv|name|addr|city|state|zip|country|tel|email). Strongly recommended.
+              </p>
             </div>
           </label>
         </section>
+
 
         {/* Paste box */}
         <section className="glass-neon rounded-2xl p-6 space-y-3">
