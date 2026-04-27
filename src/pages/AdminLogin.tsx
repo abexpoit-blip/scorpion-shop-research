@@ -66,7 +66,8 @@ const AdminLogin = () => {
       if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
       toast.success("Admin account ready — sign in below");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Bootstrap failed");
+      const friendly = describeAuthError(err);
+      toast.error(friendly.title, friendly.hint ? { description: friendly.hint } : undefined);
     } finally { setBootstrapping(false); }
   };
 
