@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { BRANDS, COUNTRIES, BrandLogo, countryFlag } from "@/lib/brands";
-import { Plus, Trash2, Upload, DollarSign, TrendingUp, Package, CheckCircle2, Wallet, Clock } from "lucide-react";
+import { Plus, Trash2, Upload, DollarSign, TrendingUp, Package, CheckCircle2, Wallet, Clock, Percent, PiggyBank, BadgeCheck } from "lucide-react";
 import { toast } from "sonner";
 
 interface CardRow { id: string; bin: string; brand: string; country: string; price: number; status: string; base: string; created_at: string; }
@@ -17,6 +17,9 @@ const SellerPanel = () => {
   const { user } = useAuth();
   const [cards, setCards] = useState<CardRow[]>([]);
   const [payouts, setPayouts] = useState<Payout[]>([]);
+  const [commissionPct, setCommissionPct] = useState<number>(20);
+  const [isVisible, setIsVisible] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [bulk, setBulk] = useState("");
   const [payoutAmount, setPayoutAmount] = useState("");
@@ -29,33 +32,40 @@ const SellerPanel = () => {
 
   const load = async () => {
     if (!user) return;
-    const [c, p] = await Promise.all([
+    const [c, p, prof] = await Promise.all([
       supabase.from("cards").select("*").eq("seller_id", user.id).order("created_at", { ascending: false }),
       supabase.from("payouts").select("*").eq("seller_id", user.id).order("created_at", { ascending: false }),
+      supabase.from("profiles").select("commission_percent,is_seller_visible,is_seller_verified").eq("id", user.id).maybeSingle(),
     ]);
     setCards((c.data ?? []) as CardRow[]);
     setPayouts((p.data ?? []) as Payout[]);
+    if (prof.data) {
+      setCommissionPct(Number(prof.data.commission_percent ?? 20));
+      setIsVisible(!!prof.data.is_seller_visible);
+      setIsVerified(!!prof.data.is_seller_verified);
+    }
   };
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [user]);
 
   const stats = useMemo(() => {
     const sold = cards.filter((c) => c.status === "sold");
     const available = cards.filter((c) => c.status === "available");
-    const revenue = sold.reduce((s, c) => s + Number(c.price), 0);
+    const gross = sold.reduce((s, c) => s + Number(c.price), 0);
+    const platformFee = gross * (commissionPct / 100);
+    const netEarnings = gross - platformFee;
     const conversion = cards.length ? (sold.length / cards.length) * 100 : 0;
     const paid = payouts.filter((p) => p.status === "paid").reduce((s, p) => s + Number(p.amount), 0);
     const pending = payouts.filter((p) => p.status === "pending").reduce((s, p) => s + Number(p.amount), 0);
-    const available_balance = revenue - paid - pending;
-    // Last 14 days revenue series
+    const available_balance = netEarnings - paid - pending;
     const days = Array.from({ length: 14 }).map((_, i) => {
       const d = new Date(); d.setDate(d.getDate() - (13 - i));
       const key = d.toISOString().slice(0, 10);
       const total = sold.filter((c) => c.created_at.slice(0, 10) === key).reduce((s, c) => s + Number(c.price), 0);
-      return { key, total };
+      return { key, total: total * (1 - commissionPct / 100) };
     });
     const max = Math.max(1, ...days.map((d) => d.total));
-    return { revenue, soldCount: sold.length, availableCount: available.length, conversion, paid, pending, available_balance, days, max };
-  }, [cards, payouts]);
+    return { gross, platformFee, netEarnings, soldCount: sold.length, availableCount: available.length, conversion, paid, pending, available_balance, days, max };
+  }, [cards, payouts, commissionPct]);
 
   const submit = async () => {
     if (!user || !form.bin || !form.price) return toast.error("BIN and price required");
@@ -105,14 +115,53 @@ const SellerPanel = () => {
   return (
     <AppShell>
       <div className="space-y-5">
-        <div>
-          <h1 className="font-display text-3xl font-black neon-text">SELLER DASHBOARD</h1>
-          <p className="text-sm text-muted-foreground mt-1">Real-time analytics, sales, and payouts</p>
+        <div className="flex items-start justify-between flex-wrap gap-3">
+          <div>
+            <h1 className="font-display text-3xl font-black neon-text">SELLER DASHBOARD</h1>
+            <p className="text-sm text-muted-foreground mt-1">Earnings, commission, and payout history</p>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            {isVerified && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/15 border border-primary/40 text-xs text-primary-glow">
+                <BadgeCheck className="h-3.5 w-3.5" />Verified seller
+              </span>
+            )}
+            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs border ${
+              isVisible ? "bg-success/15 border-success/40 text-success" : "bg-secondary/40 border-border text-muted-foreground"
+            }`}>
+              {isVisible ? "Public profile" : "Private profile"}
+            </span>
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gold/10 border border-gold/40 text-xs text-gold">
+              <Percent className="h-3 w-3" />{commissionPct.toFixed(1)}% platform fee
+            </span>
+          </div>
         </div>
+
+        {/* COMMISSION SPLIT BANNER */}
+        <section className="glass-neon rounded-2xl p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <PiggyBank className="h-5 w-5 text-gold" />
+            <h2 className="font-display tracking-wider text-primary-glow">EARNINGS &amp; COMMISSION SPLIT</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+            <Mini label={`Gross sales (100%)`} value={`$${stats.gross.toFixed(2)}`} />
+            <Mini label={`Platform fee (${commissionPct.toFixed(1)}%)`} value={`-$${stats.platformFee.toFixed(2)}`} />
+            <Mini label={`Net earnings (${(100 - commissionPct).toFixed(1)}%)`} value={`$${stats.netEarnings.toFixed(2)}`} highlight />
+          </div>
+          {/* Visual split bar */}
+          <div className="h-3 rounded-full overflow-hidden bg-secondary/60 flex">
+            <div className="bg-gradient-to-r from-primary to-primary-glow" style={{ width: `${100 - commissionPct}%` }} title={`Your share ${(100 - commissionPct).toFixed(1)}%`} />
+            <div className="bg-gold/60" style={{ width: `${commissionPct}%` }} title={`Platform fee ${commissionPct.toFixed(1)}%`} />
+          </div>
+          <div className="flex justify-between text-[10px] uppercase tracking-wider text-muted-foreground mt-2">
+            <span>You keep {(100 - commissionPct).toFixed(1)}%</span>
+            <span>Platform {commissionPct.toFixed(1)}%</span>
+          </div>
+        </section>
 
         {/* STATS */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Stat icon={DollarSign} label="Revenue" value={`$${stats.revenue.toFixed(2)}`} accent="gold" />
+          <Stat icon={DollarSign} label="Net earnings" value={`$${stats.netEarnings.toFixed(2)}`} accent="gold" />
           <Stat icon={TrendingUp} label="Cards sold" value={String(stats.soldCount)} accent="primary" />
           <Stat icon={Package} label="Available" value={String(stats.availableCount)} accent="primary" />
           <Stat icon={CheckCircle2} label="Conversion" value={`${stats.conversion.toFixed(1)}%`} accent="success" />
@@ -120,7 +169,7 @@ const SellerPanel = () => {
 
         {/* Revenue chart */}
         <section className="glass rounded-2xl p-6">
-          <h2 className="font-display tracking-wider text-primary-glow mb-4">REVENUE · LAST 14 DAYS</h2>
+          <h2 className="font-display tracking-wider text-primary-glow mb-4">NET EARNINGS · LAST 14 DAYS</h2>
           <div className="flex items-end gap-2 h-40">
             {stats.days.map((d) => (
               <div key={d.key} className="flex-1 flex flex-col items-center gap-1">
@@ -153,18 +202,44 @@ const SellerPanel = () => {
             <Input value={payoutAddress} onChange={(e) => setPayoutAddress(e.target.value)} placeholder="Wallet address" className="bg-input/60 md:col-span-1 font-mono text-xs" />
             <Button onClick={requestPayout} className="bg-gradient-primary shadow-neon">Request payout</Button>
           </div>
-          <div className="mt-4 space-y-2">
-            {payouts.slice(0, 5).map((p) => (
-              <div key={p.id} className="flex items-center justify-between p-2.5 rounded-lg bg-secondary/40 border border-border/40 text-sm">
-                <span className="font-display text-foreground">${Number(p.amount).toFixed(2)} · {p.method}</span>
-                <span className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 ${
-                  p.status === "paid" ? "bg-success/20 text-success" :
-                  p.status === "rejected" ? "bg-destructive/20 text-destructive" : "bg-warning/20 text-warning"
-                }`}>
-                  {p.status === "paid" ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}{p.status}
-                </span>
-              </div>
-            ))}
+
+          {/* PAYOUT HISTORY */}
+          <div className="mt-5">
+            <h3 className="font-display text-xs tracking-wider text-muted-foreground mb-2">PAYOUT HISTORY</h3>
+            <div className="rounded-lg overflow-hidden border border-border/40">
+              <table className="w-full text-sm">
+                <thead className="bg-secondary/60 text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <tr>
+                    <th className="p-2.5 text-left">Date</th>
+                    <th className="p-2.5 text-right">Amount</th>
+                    <th className="p-2.5">Method</th>
+                    <th className="p-2.5 text-left">Address</th>
+                    <th className="p-2.5">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {payouts.map((p) => (
+                    <tr key={p.id} className="border-t border-border/40 hover:bg-secondary/30">
+                      <td className="p-2.5 font-mono text-xs">{new Date(p.created_at).toLocaleDateString()}</td>
+                      <td className="p-2.5 text-right font-display text-primary-glow">${Number(p.amount).toFixed(2)}</td>
+                      <td className="p-2.5 text-center">{p.method}</td>
+                      <td className="p-2.5 font-mono text-[10px] text-muted-foreground max-w-[160px] truncate" title={p.address}>{p.address}</td>
+                      <td className="p-2.5 text-center">
+                        <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${
+                          p.status === "paid" ? "bg-success/20 text-success" :
+                          p.status === "rejected" ? "bg-destructive/20 text-destructive" : "bg-warning/20 text-warning"
+                        }`}>
+                          {p.status === "paid" ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}{p.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                  {payouts.length === 0 && (
+                    <tr><td colSpan={5} className="p-6 text-center text-muted-foreground text-xs">No payouts yet.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </section>
 

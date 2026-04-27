@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { AppShell } from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { COUNTRIES, countryFlag } from "@/lib/brands";
-import { Search, RotateCcw, ShoppingCart, RefreshCw, PackageX, X } from "lucide-react";
+import { Search, RotateCcw, ShoppingCart, RefreshCw, PackageX, X, BadgeCheck, Store } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -15,19 +16,40 @@ interface Card {
   refundable: boolean; has_phone: boolean; has_email: boolean; base: string; price: number;
   status: string; seller_id: string;
 }
+interface Seller {
+  id: string; username: string; seller_display_name: string | null; display_name: string | null;
+  is_seller_verified: boolean;
+}
 
 const Shop = () => {
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [cards, setCards] = useState<Card[]>([]);
+  const [sellers, setSellers] = useState<Seller[]>([]);
   const [loading, setLoading] = useState(true);
   const [searched, setSearched] = useState(false);
   const [bin, setBin] = useState("");
   const [base, setBase] = useState("all");
   const [country, setCountry] = useState("");
   const [zip, setZip] = useState("");
+  const [seller, setSeller] = useState<string>(searchParams.get("seller") ?? "all");
   const [cartIds, setCartIds] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [lastBin, setLastBin] = useState("");
+
+  const sellerMap = useMemo(() => {
+    const m = new Map<string, Seller>();
+    sellers.forEach((s) => m.set(s.id, s));
+    return m;
+  }, [sellers]);
+
+  const loadSellers = async () => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("id,username,seller_display_name,display_name,is_seller_verified")
+      .eq("is_seller_visible", true);
+    setSellers((data ?? []) as Seller[]);
+  };
 
   const load = async (auto = false) => {
     setLoading(true);
@@ -36,6 +58,7 @@ const Shop = () => {
     if (base !== "all") q = q.ilike("base", `%${base}%`);
     if (country) q = q.ilike("country", `${country}%`);
     if (zip) q = q.ilike("zip", `${zip}%`);
+    if (seller !== "all") q = q.eq("seller_id", seller);
     const { data } = await q;
     setCards((data ?? []) as Card[]);
     setLastBin(bin);
@@ -49,7 +72,15 @@ const Shop = () => {
     setCartIds(new Set((data ?? []).map((c: { card_id: string }) => c.card_id)));
   };
 
-  useEffect(() => { load(true); loadCart(); /* eslint-disable-next-line */ }, []);
+  useEffect(() => { loadSellers(); load(true); loadCart(); /* eslint-disable-next-line */ }, []);
+
+  // re-load when seller filter changes
+  useEffect(() => {
+    if (seller === "all") { searchParams.delete("seller"); } else { searchParams.set("seller", seller); }
+    setSearchParams(searchParams, { replace: true });
+    load(true);
+    // eslint-disable-next-line
+  }, [seller]);
 
   // Auto-detect BIN: when 6+ digits typed, auto-search
   useEffect(() => {
@@ -81,7 +112,7 @@ const Shop = () => {
     toast.success(`Added ${rows.length} to cart`);
   };
 
-  const reset = () => { setBin(""); setBase("all"); setCountry(""); setZip(""); setSearched(false); setTimeout(() => load(true), 0); };
+  const reset = () => { setBin(""); setBase("all"); setCountry(""); setZip(""); setSeller("all"); setSearched(false); setTimeout(() => load(true), 0); };
 
   const toggle = (id: string) => setSelected((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const toggleAll = () => setSelected((s) => s.size === cards.length ? new Set() : new Set(cards.map((c) => c.id)));
@@ -98,7 +129,7 @@ const Shop = () => {
         </div>
 
         {/* Filter bar */}
-        <div className="glass rounded-2xl p-4 grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+        <div className="glass rounded-2xl p-4 grid grid-cols-1 md:grid-cols-6 gap-3 items-end">
           <div>
             <label className="text-[10px] uppercase tracking-wider text-muted-foreground">BIN</label>
             <Input value={bin} onChange={(e) => setBin(e.target.value.replace(/\D/g, "").slice(0, 16))}
@@ -118,6 +149,21 @@ const Shop = () => {
             <label className="text-[10px] uppercase tracking-wider text-muted-foreground">COUNTRY</label>
             <Input value={country} onChange={(e) => setCountry(e.target.value.toUpperCase())}
               placeholder="Please enter country" className="bg-input/60 mt-1" />
+          </div>
+          <div>
+            <label className="text-[10px] uppercase tracking-wider text-muted-foreground">SELLER</label>
+            <Select value={seller} onValueChange={setSeller}>
+              <SelectTrigger className="bg-input/60 mt-1"><SelectValue placeholder="seller" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All sellers</SelectItem>
+                {sellers.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.seller_display_name || s.display_name || s.username}
+                    {s.is_seller_verified && " ✓"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <label className="text-[10px] uppercase tracking-wider text-muted-foreground">ZIP</label>
@@ -143,6 +189,22 @@ const Shop = () => {
             </button>
           </div>
         </div>
+
+        {seller !== "all" && sellerMap.get(seller) && (
+          <div className="glass-neon rounded-xl p-3 flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm">
+              <Store className="h-4 w-4 text-primary-glow" />
+              <span className="text-muted-foreground">Filtering by seller:</span>
+              <Link to={`/seller/${seller}`} className="font-display text-primary-glow hover:underline inline-flex items-center gap-1">
+                {sellerMap.get(seller)!.seller_display_name || sellerMap.get(seller)!.display_name || sellerMap.get(seller)!.username}
+                {sellerMap.get(seller)!.is_seller_verified && <BadgeCheck className="h-3.5 w-3.5" />}
+              </Link>
+            </div>
+            <button onClick={() => setSeller("all")} className="text-xs text-muted-foreground hover:text-destructive inline-flex items-center gap-1">
+              <X className="h-3 w-3" />Clear
+            </button>
+          </div>
+        )}
 
         {/* Results table */}
         <div className="glass rounded-2xl overflow-hidden">
@@ -184,7 +246,15 @@ const Shop = () => {
                       <input type="checkbox" checked={selected.has(c.id)} onChange={() => toggle(c.id)} className="accent-primary cursor-pointer" />
                     </td>
                     <td className="p-3 font-mono text-foreground whitespace-nowrap">
-                      {c.bin}<span className="text-muted-foreground">********</span>
+                      <div>{c.bin}<span className="text-muted-foreground">********</span></div>
+                      {sellerMap.get(c.seller_id) && (
+                        <Link to={`/seller/${c.seller_id}`} onClick={(e) => e.stopPropagation()}
+                          className="mt-1 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 border border-primary/30 text-primary-glow hover:bg-primary/20 transition">
+                          <Store className="h-2.5 w-2.5" />
+                          {sellerMap.get(c.seller_id)!.seller_display_name || sellerMap.get(c.seller_id)!.display_name || sellerMap.get(c.seller_id)!.username}
+                          {sellerMap.get(c.seller_id)!.is_seller_verified && <BadgeCheck className="h-2.5 w-2.5" />}
+                        </Link>
+                      )}
                     </td>
                     <td className="p-3 text-center text-muted-foreground">{c.refundable ? "YES" : "NO"}</td>
                     <td className="p-3 text-center font-mono">{c.exp_month ?? "—"}</td>
