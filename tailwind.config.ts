@@ -68,8 +68,9 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        display: ["Cinzel", "serif"],
-        sans: ["Sora", "system-ui", "sans-serif"],
+        display: ["Space Grotesk", "system-ui", "sans-serif"],
+        serif: ["Instrument Serif", "serif"],
+        sans: ["Manrope", "system-ui", "sans-serif"],
         mono: ["JetBrains Mono", "monospace"],
       },
       backgroundImage: {
