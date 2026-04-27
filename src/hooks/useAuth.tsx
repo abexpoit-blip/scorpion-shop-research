@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { getActiveRole, setActiveRole as persistActiveRole, clearActiveRole, type ActiveRole } from "@/lib/activeRole";
 
 type Role = "admin" | "seller" | "user";
 
@@ -20,6 +21,10 @@ interface AuthCtx {
   session: Session | null;
   profile: Profile | null;
   roles: Role[];
+  /** Which mode the user is operating in (buyer/seller). Honors the user's
+   *  pick at login for accounts that hold multiple roles. */
+  activeRole: ActiveRole;
+  setActiveRole: (role: ActiveRole) => void;
   loading: boolean;
   /** True when profile load failed or timed out. UI should show error + retry. */
   profileError: string | null;
@@ -49,6 +54,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeRole, setActiveRoleState] = useState<ActiveRole>("buyer");
 
   const [profileError, setProfileError] = useState<string | null>(null);
 
@@ -152,10 +158,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (!sess?.user) {
         setProfile(null);
         setRoles([]);
+        setActiveRoleState("buyer");
+        clearActiveRole();
         loadedForUid.current = null;
         setLoading(false);
         return;
       }
+
+      // Restore the user's chosen mode (buyer/seller) from localStorage.
+      const stored = getActiveRole(sess.user.id);
+      if (stored) setActiveRoleState(stored);
 
       // Skip refetch on token refresh for the same user — the JWT changed
       // but profile/roles did not.
@@ -185,11 +197,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   const signOut = async () => {
+    clearActiveRole();
     await supabase.auth.signOut();
   };
 
+  const setActiveRole = (role: ActiveRole) => {
+    if (user) persistActiveRole(user.id, role);
+    setActiveRoleState(role);
+  };
+
   return (
-    <Ctx.Provider value={{ user, session, profile, roles, loading, profileError, refresh, signOut }}>
+    <Ctx.Provider value={{ user, session, profile, roles, activeRole, setActiveRole, loading, profileError, refresh, signOut }}>
       {children}
     </Ctx.Provider>
   );

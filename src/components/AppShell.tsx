@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Home, Store, ShoppingCart, ListOrdered, Wallet, LifeBuoy, Settings, ShieldCheck, PackagePlus, LogOut, Menu, X, Search, Bell, Maximize2, Minimize2, AlertTriangle, RefreshCw } from "lucide-react";
+import { Home, Store, ShoppingCart, ListOrdered, Wallet, LifeBuoy, Settings, ShieldCheck, PackagePlus, LogOut, Menu, X, Search, Bell, Maximize2, Minimize2, AlertTriangle, RefreshCw, Repeat } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import logo from "@/assets/panther-logo.png";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,18 @@ const baseNav = [
 ];
 
 export const AppShell = ({ children }: { children: ReactNode }) => {
-  const { profile, roles, signOut, loading, user, profileError, refresh } = useAuth();
+  const { profile, roles, activeRole, setActiveRole, signOut, loading, user, profileError, refresh } = useAuth();
+  const canSell = roles.includes("seller") || roles.includes("admin");
+  // Effective mode honours the user's pick at login but falls back safely for
+  // accounts that don't actually carry the seller role.
+  const effectiveRole: "buyer" | "seller" = activeRole === "seller" && canSell ? "seller" : "buyer";
+  const roleLabel = roles.includes("admin")
+    ? "Admin"
+    : effectiveRole === "seller"
+    ? "Seller"
+    : canSell
+    ? "Buyer" // multi-role account currently shopping as a buyer
+    : "Member";
   // Skeleton ONLY while genuinely fetching for a logged-in user with no error.
   // The hook guarantees `loading` flips to false within 8s (timeout) so this
   // can never be stuck "true" forever.
@@ -39,7 +50,10 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
   }, [density]);
 
   const items = [...baseNav];
-  if (roles.includes("seller") || roles.includes("admin")) {
+  // Only surface the Seller panel link when the user is currently in seller mode
+  // (or is an admin). Buyers in buyer-mode shouldn't see the seller nav even if
+  // their account also holds the seller role.
+  if ((effectiveRole === "seller" && canSell) || roles.includes("admin")) {
     items.splice(5, 0, { to: "/seller", label: "Seller", icon: PackagePlus });
   }
   if (roles.includes("admin")) {
@@ -181,12 +195,27 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
                   <>
                     <div className="nav-profile-name font-bold text-foreground -mb-0.5">{profile?.username}</div>
                     <div className="nav-profile-role text-primary-glow/90 uppercase tracking-[0.22em] font-semibold">
-                      {roles.includes("admin") ? "Admin" : roles.includes("seller") ? "Seller" : "Member"}
+                      {roleLabel}
                     </div>
                   </>
                 )}
               </div>
             </NavLink>
+
+            {canSell && (
+              <button
+                onClick={() => {
+                  const next = effectiveRole === "seller" ? "buyer" : "seller";
+                  setActiveRole(next);
+                  nav(next === "seller" ? "/seller" : "/");
+                }}
+                className="nav-icon-btn hidden md:inline-flex"
+                title={`Switch to ${effectiveRole === "seller" ? "buyer" : "seller"} mode`}
+                aria-label={`Switch to ${effectiveRole === "seller" ? "buyer" : "seller"} mode`}
+              >
+                <Repeat className="nav-icon" strokeWidth={1.75} />
+              </button>
+            )}
 
             <button onClick={async () => { await signOut(); nav("/auth"); }}
               className="nav-icon-btn nav-icon-btn-danger hidden md:inline-flex" aria-label="Sign out">
@@ -221,7 +250,7 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
                   <>
                     <div className="nav-drawer-name font-semibold text-foreground truncate">{profile?.username}</div>
                     <div className="nav-drawer-role text-muted-foreground uppercase tracking-[0.22em]">
-                      {roles.includes("admin") ? "Admin" : roles.includes("seller") ? "Seller" : "Member"}
+                      {roleLabel}
                     </div>
                   </>
                 )}
