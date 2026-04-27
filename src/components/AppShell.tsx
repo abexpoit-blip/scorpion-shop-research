@@ -119,13 +119,13 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
               {density === "compact" ? <Maximize2 className="nav-icon" strokeWidth={1.75} /> : <Minimize2 className="nav-icon" strokeWidth={1.75} />}
             </button>
 
-            <div className="nav-balance hidden sm:flex items-center rounded-full bg-gradient-to-r from-primary/15 to-gold/10 border border-primary/30 transition-all duration-300 hover:border-primary/50 hover:shadow-[0_0_22px_hsl(268_90%_62%/0.25)]">
+            <div className="nav-balance hidden sm:flex items-center rounded-full bg-gradient-to-r from-primary/15 to-gold/10 border border-primary/30">
               <Wallet className="nav-icon text-primary-glow" strokeWidth={1.75} />
               <span className="nav-balance-label uppercase tracking-[0.2em] text-muted-foreground">Balance</span>
               <span className="nav-balance-value font-display font-semibold gold-text">${Number(profile?.balance ?? 0).toFixed(2)}</span>
             </div>
 
-            <NavLink to="/settings" className="nav-profile flex items-center rounded-full border border-border/50 transition-all duration-300 hover:border-primary/45 hover:shadow-[0_0_18px_hsl(268_90%_62%/0.22)] group">
+            <NavLink to="/settings" className="nav-profile flex items-center rounded-full border border-border/50 group">
               <div className="nav-profile-avatar rounded-full bg-gradient-primary flex items-center justify-center font-semibold text-primary-foreground shadow-neon transition-transform duration-300 group-hover:scale-105">
                 {profile?.username?.[0]?.toUpperCase() ?? "U"}
               </div>
