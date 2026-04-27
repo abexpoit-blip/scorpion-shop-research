@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BRANDS, COUNTRIES, detectBrandFromBin } from "@/lib/brands";
+import { BRANDS } from "@/lib/brands";
 import { parseAndFormat, dedupe, detectBrand, ParsedCard } from "@/lib/cardFormatter";
 import { Upload, FileText, Wand2, Trash2, Plus, CheckCircle2, AlertTriangle, Sparkles } from "lucide-react";
 import { toast } from "sonner";
