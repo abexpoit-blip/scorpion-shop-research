@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { getSavedAccounts, removeSavedAccount, switchAccount, type SavedAccount } from "@/lib/accountSwitcher";
+import { Users, X, LogIn, Plus } from "lucide-react";
 
 const Settings = () => {
   const { user, profile, refresh, roles } = useAuth();
@@ -14,6 +16,10 @@ const Settings = () => {
   const [contact, setContact] = useState("");
   const [description, setDescription] = useState("");
   const [pwd, setPwd] = useState("");
+  const [accounts, setAccounts] = useState<SavedAccount[]>([]);
+
+  useEffect(() => { setAccounts(getSavedAccounts()); }, []);
+  const removeAcc = (email: string) => { removeSavedAccount(email); setAccounts(getSavedAccounts()); };
 
   const saveProfile = async () => {
     if (!user) return;
