@@ -82,7 +82,7 @@ const Cart = () => {
       const fullMap = new Map((full ?? []).map((c) => [(c as { id: string }).id, c]));
       await Promise.all(
         (insertedItems ?? []).map((row) => {
-          const snap = (row as { card_snapshot: { id: string } }).card_snapshot;
+          const snap = (row as unknown as { card_snapshot: { id: string } }).card_snapshot;
           const merged = { ...snap, ...(fullMap.get(snap.id) ?? {}) };
           return supabase
             .from("order_items")
