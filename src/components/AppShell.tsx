@@ -265,10 +265,21 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
 };
 
 export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
-  const { user, loading } = useAuth();
+  const { user, profile, loading, signOut } = useAuth();
   const nav = useNavigate();
   if (loading) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading…</div>;
   if (!user) { nav("/auth"); return null; }
+  if (profile?.banned) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center">
+        <div className="glass-neon rounded-2xl p-8 max-w-md">
+          <h2 className="font-display text-2xl text-destructive mb-2">ACCOUNT SUSPENDED</h2>
+          <p className="text-muted-foreground text-sm mb-6">Your account has been banned. Contact support if you believe this is a mistake.</p>
+          <Button onClick={async () => { await signOut(); nav("/auth"); }} variant="outline">Sign out</Button>
+        </div>
+      </div>
+    );
+  }
   return <>{children}</>;
 };
 

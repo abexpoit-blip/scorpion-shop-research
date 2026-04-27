@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Captcha } from "@/components/Captcha";
@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Lock, User as UserIcon, Mail, ShieldCheck, Zap, Crown } from "lucide-react";
+import { Lock, User as UserIcon, Mail, ShieldCheck, Zap, Crown, Users as UsersIcon, X } from "lucide-react";
 import logo from "@/assets/panther-logo.png";
+import { getSavedAccounts, removeSavedAccount, type SavedAccount } from "@/lib/accountSwitcher";
 
 const Auth = () => {
   const nav = useNavigate();
@@ -18,6 +19,28 @@ const Auth = () => {
   const [captcha, setCaptcha] = useState("");
   const [captchaOk, setCaptchaOk] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [savedAccounts, setSavedAccounts] = useState<SavedAccount[]>([]);
+
+  useEffect(() => {
+    setSavedAccounts(getSavedAccounts());
+    const prefill = sessionStorage.getItem("cruzercc.prefillEmail");
+    if (prefill) {
+      setUsername(prefill);
+      sessionStorage.removeItem("cruzercc.prefillEmail");
+    }
+  }, []);
+
+  const pickAccount = (acc: SavedAccount) => {
+    setUsername(acc.email);
+    setMode("login");
+    setTimeout(() => document.getElementById("auth-password")?.focus(), 50);
+  };
+
+  const removeAccount = (e: React.MouseEvent, email: string) => {
+    e.stopPropagation();
+    removeSavedAccount(email);
+    setSavedAccounts(getSavedAccounts());
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
