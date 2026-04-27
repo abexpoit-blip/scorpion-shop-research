@@ -20,17 +20,69 @@ interface Application {
 }
 
 const AdminApplications = () => {
+  const { user } = useAuth();
   const [apps, setApps] = useState<Application[]>([]);
   const [tab, setTab] = useState<"pending" | "all">("pending");
   const [loading, setLoading] = useState(true);
+  const [notes, setNotes] = useState<Map<string, AppNote[]>>(new Map());
+  const [authors, setAuthors] = useState<Map<string, Profile>>(new Map());
 
   const load = async () => {
     setLoading(true);
     const { data } = await supabase.from("seller_applications").select("*").order("created_at", { ascending: false });
-    setApps((data ?? []) as Application[]);
+    const list = (data ?? []) as Application[];
+    setApps(list);
     setLoading(false);
+
+    if (list.length > 0) {
+      const { data: ns } = await (supabase.from("application_notes" as never) as any)
+        .select("*").in("application_id", list.map((a) => a.id)).order("created_at", { ascending: true });
+      const map = new Map<string, AppNote[]>();
+      ((ns ?? []) as AppNote[]).forEach((n) => {
+        if (!map.has(n.application_id)) map.set(n.application_id, []);
+        map.get(n.application_id)!.push(n);
+      });
+      setNotes(map);
+
+      const authorIds = Array.from(new Set(((ns ?? []) as AppNote[]).map((n) => n.author_id)));
+      if (authorIds.length > 0) {
+        const { data: ps } = await supabase.from("profiles").select("id,username").in("id", authorIds);
+        setAuthors(new Map((ps ?? []).map((p: any) => [p.id, p])));
+      }
+    } else {
+      setNotes(new Map());
+    }
   };
   useEffect(() => { load(); }, []);
+
+  const addNote = async (applicationId: string, text: string) => {
+    if (!user || !text.trim()) return;
+    const { data, error } = await (supabase.from("application_notes" as never) as any)
+      .insert({ application_id: applicationId, author_id: user.id, note: text.trim() })
+      .select().single();
+    if (error) return toast.error(error.message);
+    setNotes((m) => {
+      const n = new Map(m);
+      const arr = n.get(applicationId) ?? [];
+      n.set(applicationId, [...arr, data as AppNote]);
+      return n;
+    });
+    if (user && !authors.has(user.id)) {
+      const { data: me } = await supabase.from("profiles").select("id,username").eq("id", user.id).maybeSingle();
+      if (me) setAuthors((a) => new Map(a).set(me.id, me as Profile));
+    }
+    toast.success("Note saved");
+  };
+
+  const deleteNote = async (applicationId: string, noteId: string) => {
+    const { error } = await (supabase.from("application_notes" as never) as any).delete().eq("id", noteId);
+    if (error) return toast.error(error.message);
+    setNotes((m) => {
+      const n = new Map(m);
+      n.set(applicationId, (n.get(applicationId) ?? []).filter((x) => x.id !== noteId));
+      return n;
+    });
+  };
 
   const decide = async (app: Application, approve: boolean, note?: string) => {
     const { error } = await (supabase.from("seller_applications") as any).update({
