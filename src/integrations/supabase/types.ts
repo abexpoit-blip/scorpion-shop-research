@@ -404,6 +404,7 @@ export type Database = {
           seller_bio: string | null
           seller_display_name: string | null
           seller_status: string | null
+          trust_tier: Database["public"]["Enums"]["trust_tier"]
           updated_at: string
           username: string
         }
@@ -421,6 +422,7 @@ export type Database = {
           seller_bio?: string | null
           seller_display_name?: string | null
           seller_status?: string | null
+          trust_tier?: Database["public"]["Enums"]["trust_tier"]
           updated_at?: string
           username: string
         }
@@ -438,6 +440,7 @@ export type Database = {
           seller_bio?: string | null
           seller_display_name?: string | null
           seller_status?: string | null
+          trust_tier?: Database["public"]["Enums"]["trust_tier"]
           updated_at?: string
           username?: string
         }
@@ -650,6 +653,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "seller" | "user"
+      trust_tier: "none" | "verified" | "trusted" | "vip"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -778,6 +782,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "seller", "user"],
+      trust_tier: ["none", "verified", "trusted", "vip"],
     },
   },
 } as const
