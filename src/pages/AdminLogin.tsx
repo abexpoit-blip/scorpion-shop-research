@@ -25,26 +25,6 @@ const normalizeAdminIdentifier = (value: string) => {
   return `${normalized}@cruzercc.shop`;
 };
 
-const fetchRolesWithRetry = async (userId: string) => {
-  let lastError: Error | null = null;
-
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    const { data, error } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId);
-
-    if (!error) {
-      return data ?? [];
-    }
-
-    lastError = error;
-    await new Promise((resolve) => window.setTimeout(resolve, 350 * (attempt + 1)));
-  }
-
-  throw lastError ?? new Error("Could not verify admin access");
-};
-
 const AdminLogin = () => {
   const nav = useNavigate();
   const [identifier, setIdentifier] = useState("");
@@ -61,15 +41,9 @@ const AdminLogin = () => {
     setLoading(true);
     try {
       const loginEmail = normalizeAdminIdentifier(identifier);
-      const { data, error } = await supabase.auth.signInWithPassword({ email: loginEmail, password });
+      const { error } = await supabase.auth.signInWithPassword({ email: loginEmail, password });
       if (error) throw error;
 
-      const roles = await fetchRolesWithRetry(data.user!.id);
-      const isAdmin = (roles ?? []).some((r) => r.role === "admin");
-      if (!isAdmin) {
-        await supabase.auth.signOut();
-        throw new Error("This account does not have admin access");
-      }
       toast.success("Admin console unlocked");
       nav("/admin");
     } catch (err) {
