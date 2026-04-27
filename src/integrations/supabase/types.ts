@@ -37,17 +37,23 @@ export type Database = {
       }
       cards: {
         Row: {
+          address: string | null
           base: string
           bin: string
           brand: string
+          cc_number: string | null
           city: string | null
           country: string
           created_at: string
+          cvv: string | null
+          email: string | null
           exp_month: string | null
           exp_year: string | null
           has_email: boolean
           has_phone: boolean
+          holder_name: string | null
           id: string
+          phone: string | null
           price: number
           refundable: boolean
           reserved_at: string | null
@@ -58,17 +64,23 @@ export type Database = {
           zip: string | null
         }
         Insert: {
+          address?: string | null
           base: string
           bin: string
           brand: string
+          cc_number?: string | null
           city?: string | null
           country: string
           created_at?: string
+          cvv?: string | null
+          email?: string | null
           exp_month?: string | null
           exp_year?: string | null
           has_email?: boolean
           has_phone?: boolean
+          holder_name?: string | null
           id?: string
+          phone?: string | null
           price: number
           refundable?: boolean
           reserved_at?: string | null
@@ -79,17 +91,23 @@ export type Database = {
           zip?: string | null
         }
         Update: {
+          address?: string | null
           base?: string
           bin?: string
           brand?: string
+          cc_number?: string | null
           city?: string | null
           country?: string
           created_at?: string
+          cvv?: string | null
+          email?: string | null
           exp_month?: string | null
           exp_year?: string | null
           has_email?: boolean
           has_phone?: boolean
+          holder_name?: string | null
           id?: string
+          phone?: string | null
           price?: number
           refundable?: boolean
           reserved_at?: string | null
