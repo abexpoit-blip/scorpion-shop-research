@@ -64,28 +64,28 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
       </div>
 
       {/* Top Navbar */}
-      <header className="sticky top-0 z-40 border-b border-border/40 bg-background/75 backdrop-blur-2xl">
-        <div className="mx-auto max-w-[1500px] px-6 lg:px-10 h-[84px] flex items-center justify-between gap-10">
+      <header className="nav-header sticky top-0 z-40 border-b border-border/40 bg-background/75 backdrop-blur-2xl">
+        <div className="nav-inner mx-auto max-w-[1500px] flex items-center justify-between">
           {/* Brand */}
-          <NavLink to="/" className="flex items-center gap-3.5 group shrink-0">
+          <NavLink to="/" className="nav-brand flex items-center group shrink-0">
             <div className="relative">
-              <div className="absolute inset-0 rounded-xl bg-primary/30 blur-xl group-hover:bg-primary/50 transition" />
+              <div className="absolute inset-0 rounded-xl bg-primary/30 blur-xl group-hover:bg-primary/50 transition-all duration-500" />
               <img src={logo} alt="cruzercc.shop" width={44} height={44}
-                className="relative h-11 w-11 drop-shadow-[0_0_18px_hsl(268_90%_62%/0.65)]" />
+                className="nav-brand-logo relative drop-shadow-[0_0_18px_hsl(268_90%_62%/0.65)] transition-transform duration-500 group-hover:scale-105" />
             </div>
-            <div className="leading-none">
-              <div className="font-display text-[20px] font-semibold tracking-[-0.02em]">
+            <div className="leading-none ml-3 sm:ml-3.5">
+              <div className="nav-brand-name font-display font-semibold tracking-[-0.02em]">
                 <span className="text-foreground">cruzer</span><span className="gold-text">cc</span>
                 <span className="text-muted-foreground/80">.shop</span>
               </div>
-              <div className="font-mono text-[9.5px] tracking-[0.36em] text-muted-foreground/60 mt-1.5">
+              <div className="nav-brand-tag font-mono text-muted-foreground/60 mt-1 sm:mt-1.5">
                 GIFT&nbsp;CARD · CC&nbsp;PROVIDER
               </div>
             </div>
           </NavLink>
 
           {/* Desktop nav pills */}
-          <nav className="hidden lg:flex items-center gap-0.5 bg-secondary/25 border border-border/40 rounded-full px-1.5 py-1.5">
+          <nav className="nav-pills hidden lg:flex items-center bg-secondary/25 border border-border/40 rounded-full">
             {items.map((it) => (
               <NavLink
                 key={it.to}
@@ -94,47 +94,56 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
                 className="nav-pill"
                 data-active={isActive(it.to)}
               >
-                <it.icon className="h-[15px] w-[15px]" strokeWidth={1.75} />
+                <it.icon className="nav-pill-icon" strokeWidth={1.75} />
                 <span>{it.label}</span>
               </NavLink>
             ))}
           </nav>
 
           {/* Right cluster */}
-          <div className="flex items-center gap-2.5 shrink-0">
-            <button className="hidden md:flex h-11 w-11 items-center justify-center rounded-full border border-border/50 hover:border-primary/40 hover:text-primary-glow text-muted-foreground transition" aria-label="Search">
-              <Search className="h-[15px] w-[15px]" strokeWidth={1.75} />
+          <div className="nav-right flex items-center shrink-0">
+            <button className="nav-icon-btn hidden md:inline-flex" aria-label="Search">
+              <Search className="nav-icon" strokeWidth={1.75} />
             </button>
-            <button className="hidden md:flex h-11 w-11 items-center justify-center rounded-full border border-border/50 hover:border-primary/40 hover:text-primary-glow text-muted-foreground transition relative" aria-label="Notifications">
-              <Bell className="h-[15px] w-[15px]" strokeWidth={1.75} />
+            <button className="nav-icon-btn hidden md:inline-flex relative" aria-label="Notifications">
+              <Bell className="nav-icon" strokeWidth={1.75} />
               <span className="absolute top-2.5 right-2.5 h-1.5 w-1.5 rounded-full bg-gold animate-pulse" />
             </button>
 
-            <div className="hidden sm:flex items-center gap-2.5 pl-4 pr-5 h-11 rounded-full bg-gradient-to-r from-primary/15 to-gold/10 border border-primary/30">
-              <Wallet className="h-[15px] w-[15px] text-primary-glow" strokeWidth={1.75} />
-              <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Balance</span>
-              <span className="font-display font-semibold text-[15px] gold-text">${Number(profile?.balance ?? 0).toFixed(2)}</span>
+            <button
+              onClick={() => setDensity(density === "compact" ? "comfortable" : "compact")}
+              className="nav-icon-btn hidden md:inline-flex"
+              aria-label={`Switch to ${density === "compact" ? "comfortable" : "compact"} density`}
+              title={density === "compact" ? "Switch to comfortable" : "Switch to compact"}
+            >
+              {density === "compact" ? <Maximize2 className="nav-icon" strokeWidth={1.75} /> : <Minimize2 className="nav-icon" strokeWidth={1.75} />}
+            </button>
+
+            <div className="nav-balance hidden sm:flex items-center rounded-full bg-gradient-to-r from-primary/15 to-gold/10 border border-primary/30 transition-all duration-300 hover:border-primary/50 hover:shadow-[0_0_22px_hsl(268_90%_62%/0.25)]">
+              <Wallet className="nav-icon text-primary-glow" strokeWidth={1.75} />
+              <span className="nav-balance-label uppercase tracking-[0.2em] text-muted-foreground">Balance</span>
+              <span className="nav-balance-value font-display font-semibold gold-text">${Number(profile?.balance ?? 0).toFixed(2)}</span>
             </div>
 
-            <NavLink to="/settings" className="flex items-center gap-3 h-11 pl-1.5 pr-4 rounded-full border border-border/50 hover:border-primary/40 transition group">
-              <div className="h-8 w-8 rounded-full bg-gradient-primary flex items-center justify-center text-[12px] font-semibold text-primary-foreground shadow-neon">
+            <NavLink to="/settings" className="nav-profile flex items-center rounded-full border border-border/50 transition-all duration-300 hover:border-primary/45 hover:shadow-[0_0_18px_hsl(268_90%_62%/0.22)] group">
+              <div className="nav-profile-avatar rounded-full bg-gradient-primary flex items-center justify-center font-semibold text-primary-foreground shadow-neon transition-transform duration-300 group-hover:scale-105">
                 {profile?.username?.[0]?.toUpperCase() ?? "U"}
               </div>
               <div className="hidden xl:block leading-tight pr-1">
-                <div className="text-[13px] font-semibold text-foreground -mb-0.5">{profile?.username}</div>
-                <div className="text-[9px] text-muted-foreground uppercase tracking-[0.22em]">
+                <div className="nav-profile-name font-semibold text-foreground -mb-0.5">{profile?.username}</div>
+                <div className="nav-profile-role text-muted-foreground uppercase tracking-[0.22em]">
                   {roles.includes("admin") ? "Admin" : roles.includes("seller") ? "Seller" : "Member"}
                 </div>
               </div>
             </NavLink>
 
             <button onClick={async () => { await signOut(); nav("/auth"); }}
-              className="hidden md:flex h-11 w-11 items-center justify-center rounded-full border border-border/50 hover:border-destructive/50 hover:text-destructive text-muted-foreground transition" aria-label="Sign out">
-              <LogOut className="h-[15px] w-[15px]" strokeWidth={1.75} />
+              className="nav-icon-btn nav-icon-btn-danger hidden md:inline-flex" aria-label="Sign out">
+              <LogOut className="nav-icon" strokeWidth={1.75} />
             </button>
 
-            <button onClick={() => setOpen(!open)} className="lg:hidden h-11 w-11 flex items-center justify-center rounded-full border border-border/50" aria-label="Menu">
-              {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+            <button onClick={() => setOpen(!open)} className="nav-icon-btn lg:hidden" aria-label="Menu">
+              {open ? <X className="nav-icon" /> : <Menu className="nav-icon" />}
             </button>
           </div>
         </div>
