@@ -4,6 +4,7 @@ import { Home, Store, ShoppingCart, ListOrdered, Wallet, LifeBuoy, Settings, Shi
 import { useAuth } from "@/hooks/useAuth";
 import logo from "@/assets/panther-logo.png";
 import { Button } from "@/components/ui/button";
+import { BuildBadge } from "@/components/BuildBadge";
 
 type Density = "comfortable" | "compact";
 
