@@ -277,7 +277,7 @@ const AdminPayouts = () => {
           )}
         </div>
 
-
+        {tab === "pending" && pending.length > 0 && (
           <div className="mb-3 flex items-center gap-3 flex-wrap">
             <label className="inline-flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
               <input
