@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Lock, User as UserIcon, Mail, ShieldCheck, Zap, Crown, Users as UsersIcon, X } from "lucide-react";
+import { Lock, User as UserIcon, Mail, ShieldCheck, Zap, Crown, Users as UsersIcon, X, ArrowRight } from "lucide-react";
 import logo from "@/assets/panther-logo.png";
 import { getSavedAccounts, removeSavedAccount, type SavedAccount } from "@/lib/accountSwitcher";
 import { setActiveRole } from "@/lib/activeRole";
