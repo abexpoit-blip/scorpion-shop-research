@@ -3,7 +3,8 @@ import { AdminLayout } from "@/components/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Wallet, Check, X, BadgeCheck, Eye, EyeOff, UserCheck, Search } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Wallet, Check, X, BadgeCheck, Eye, EyeOff, UserCheck, Search, ArrowUpDown, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 
 interface Profile {
