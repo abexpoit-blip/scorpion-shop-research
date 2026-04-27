@@ -15,6 +15,8 @@ import Recharge from "./pages/Recharge";
 import Tickets from "./pages/Tickets";
 import Settings from "./pages/Settings";
 import SellerPanel from "./pages/SellerPanel";
+import SellerApply from "./pages/SellerApply";
+import SellerUpload from "./pages/SellerUpload";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
