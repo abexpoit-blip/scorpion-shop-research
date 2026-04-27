@@ -45,15 +45,15 @@ const Index = () => {
                 WELCOME BACK · {profile?.username?.toUpperCase() ?? "MEMBER"}
               </div>
 
-              <h1 className="font-display text-5xl lg:text-7xl font-bold leading-[1.02] tracking-tight">
-                The world's most <span className="font-serif-italic gold-text">trusted</span>
-                <br />
-                <span className="neon-text">Gift Card &amp; CC</span> marketplace.
+              <h1 className="font-display font-extrabold leading-[0.92] tracking-[-0.04em] text-[64px] sm:text-[88px] lg:text-[112px]">
+                <span className="block text-foreground drop-shadow-[0_0_30px_hsl(0_0%_100%/0.08)]">PREMIUM.</span>
+                <span className="block neon-text">VERIFIED.</span>
+                <span className="block gold-text drop-shadow-[0_0_28px_hsl(43_96%_56%/0.35)]">INSTANT.</span>
               </h1>
 
               <p className="text-base lg:text-lg text-muted-foreground max-w-xl leading-relaxed">
-                Verified inventory from elite sellers, instant delivery, automated replacement, and
-                vault-grade settlement — engineered for professional buyers who demand the very best.
+                Your trusted Gift Card and CC provider. Verified inventory, instant delivery,
+                vault-grade security — every order, every time.
               </p>
 
               <div className="flex flex-wrap items-center gap-3">
@@ -65,11 +65,11 @@ const Index = () => {
                 </Link>
               </div>
 
-              <div className="flex flex-wrap gap-x-8 gap-y-3 pt-2 text-xs">
-                <TrustItem icon={ShieldCheck} label="Vault-grade security" />
-                <TrustItem icon={Zap} label="Instant delivery" />
-                <TrustItem icon={BadgeCheck} label="Verified sellers only" />
-                <TrustItem icon={Headphones} label="24/7 priority support" />
+              {/* Feature pills */}
+              <div className="grid grid-cols-3 gap-3 pt-2 max-w-xl">
+                <FeaturePill icon={ShieldCheck} label="Vault-grade" />
+                <FeaturePill icon={Zap} label="Instant" />
+                <FeaturePill icon={Crown} label="Curated" />
               </div>
             </div>
 
