@@ -49,11 +49,12 @@ const AdminLogin = () => {
       nav("/admin");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Login failed";
-      toast.error(
-        message.includes("Could not verify admin access")
-          ? "Backend checked in but admin permission lookup failed. Please try again now."
-          : message,
-      );
+      if (message.includes("Could not verify admin access")) {
+        toast.error("Backend checked in but admin permission lookup failed. Please try again now.");
+      } else {
+        const friendly = describeAuthError(err);
+        toast.error(friendly.title, friendly.hint ? { description: friendly.hint } : undefined);
+      }
     } finally { setLoading(false); }
   };
 
