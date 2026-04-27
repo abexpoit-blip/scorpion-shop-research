@@ -10,8 +10,11 @@ import { Lock, User as UserIcon, Mail, ShieldCheck, Zap, Crown, Users as UsersIc
 import logo from "@/assets/panther-logo.png";
 import { getSavedAccounts, removeSavedAccount, type SavedAccount } from "@/lib/accountSwitcher";
 
+type Role = "buyer" | "seller";
+
 const Auth = () => {
   const nav = useNavigate();
+  const [role, setRole] = useState<Role>("buyer");
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
