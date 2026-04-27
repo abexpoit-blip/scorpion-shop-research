@@ -31,6 +31,7 @@ const Admin = () => {
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [cards, setCards] = useState<Card[]>([]);
   const [addresses, setAddresses] = useState<DepositAddress[]>([]);
+  const [refunds, setRefunds] = useState<RefundRequest[]>([]);
   const [annTitle, setAnnTitle] = useState("");
   const [annBody, setAnnBody] = useState("");
   const [bulk, setBulk] = useState("");
