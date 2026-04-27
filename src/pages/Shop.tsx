@@ -112,7 +112,7 @@ const Shop = () => {
     toast.success(`Added ${rows.length} to cart`);
   };
 
-  const reset = () => { setBin(""); setBase("all"); setCountry(""); setZip(""); setSearched(false); setTimeout(() => load(true), 0); };
+  const reset = () => { setBin(""); setBase("all"); setCountry(""); setZip(""); setSeller("all"); setSearched(false); setTimeout(() => load(true), 0); };
 
   const toggle = (id: string) => setSelected((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const toggleAll = () => setSelected((s) => s.size === cards.length ? new Set() : new Set(cards.map((c) => c.id)));
@@ -129,7 +129,7 @@ const Shop = () => {
         </div>
 
         {/* Filter bar */}
-        <div className="glass rounded-2xl p-4 grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+        <div className="glass rounded-2xl p-4 grid grid-cols-1 md:grid-cols-6 gap-3 items-end">
           <div>
             <label className="text-[10px] uppercase tracking-wider text-muted-foreground">BIN</label>
             <Input value={bin} onChange={(e) => setBin(e.target.value.replace(/\D/g, "").slice(0, 16))}
@@ -149,6 +149,21 @@ const Shop = () => {
             <label className="text-[10px] uppercase tracking-wider text-muted-foreground">COUNTRY</label>
             <Input value={country} onChange={(e) => setCountry(e.target.value.toUpperCase())}
               placeholder="Please enter country" className="bg-input/60 mt-1" />
+          </div>
+          <div>
+            <label className="text-[10px] uppercase tracking-wider text-muted-foreground">SELLER</label>
+            <Select value={seller} onValueChange={setSeller}>
+              <SelectTrigger className="bg-input/60 mt-1"><SelectValue placeholder="seller" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All sellers</SelectItem>
+                {sellers.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.seller_display_name || s.display_name || s.username}
+                    {s.is_seller_verified && " ✓"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <label className="text-[10px] uppercase tracking-wider text-muted-foreground">ZIP</label>
