@@ -427,11 +427,28 @@ const AdminPayouts = () => {
                     <input type="checkbox" checked={selected.has(u.id)} onChange={() => toggleOne(u.id)} className="accent-primary cursor-pointer" />
                   </td>
                   <td className="p-3">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-medium">{u.seller_display_name || u.username}</span>
-                      {u.is_seller_verified && <BadgeCheck className="h-3.5 w-3.5 text-primary-glow" />}
+                      <TrustBadge tier={u.trust_tier} size="xs" />
                     </div>
                     <p className="text-[10px] font-mono text-muted-foreground">@{u.username}</p>
+                  </td>
+                  <td className="p-3 text-center">
+                    <Select
+                      value={u.trust_tier ?? "none"}
+                      onValueChange={(v) => updateSeller(u.id, { trust_tier: v as TrustTier })}
+                    >
+                      <SelectTrigger className="h-8 w-[120px] mx-auto bg-input/60 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TRUST_TIERS.map((t) => (
+                          <SelectItem key={t} value={t} className="text-xs capitalize">
+                            {t === "none" ? "— none —" : t}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </td>
                   <td className="p-3 text-center">
                     <Toggle checked={!!u.is_seller_verified} onChange={(v) => updateSeller(u.id, { is_seller_verified: v })} />
@@ -451,7 +468,7 @@ const AdminPayouts = () => {
                 </tr>
               ))}
               {filteredSellers.length === 0 && (
-                <tr><td colSpan={5} className="p-6 text-center text-muted-foreground text-xs">No sellers match.</td></tr>
+                <tr><td colSpan={6} className="p-6 text-center text-muted-foreground text-xs">No sellers match.</td></tr>
               )}
             </tbody>
           </table>
