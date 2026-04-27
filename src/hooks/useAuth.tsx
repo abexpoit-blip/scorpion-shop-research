@@ -54,6 +54,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeRole, setActiveRoleState] = useState<ActiveRole>("buyer");
 
   const [profileError, setProfileError] = useState<string | null>(null);
 
