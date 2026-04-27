@@ -13,7 +13,16 @@ export async function verifyAdminAccess(userId: string): Promise<boolean> {
     return ((data as RoleRow[] | null) ?? []).some((row) => row.role === "admin");
   }
 
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
   const { data: fallback, error: fallbackError } = await supabase.functions.invoke("verify-admin-access", {
+    headers: session?.access_token
+      ? {
+          Authorization: `Bearer ${session.access_token}`,
+        }
+      : undefined,
     body: {},
   });
 
