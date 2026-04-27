@@ -3,7 +3,8 @@ import { useParams, Link } from "react-router-dom";
 import { AppShell } from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { BrandLogo, countryFlag } from "@/lib/brands";
-import { BadgeCheck, Store, ArrowLeft, ShoppingCart } from "lucide-react";
+import { BadgeCheck, Store, ArrowLeft, ShoppingCart, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface Profile {
   id: string;
