@@ -137,7 +137,10 @@ const Admin = () => {
   };
 
   const updateAddress = async (a: DepositAddress, field: "address" | "network", value: string) => {
-    await supabase.from("deposit_addresses").update({ [field]: value, updated_at: new Date().toISOString() }).eq("id", a.id);
+    const patch = field === "address"
+      ? { address: value, updated_at: new Date().toISOString() }
+      : { network: value, updated_at: new Date().toISOString() };
+    await supabase.from("deposit_addresses").update(patch).eq("id", a.id);
     load();
   };
 
