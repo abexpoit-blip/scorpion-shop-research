@@ -28,11 +28,11 @@ const SellerApply = () => {
     if (!user) return;
     setLoading(true);
     const [a, r] = await Promise.all([
-      supabase.from("seller_applications").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
+      (supabase.from("seller_applications") as any).select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
       supabase.from("user_roles").select("role").eq("user_id", user.id),
     ]);
-    setApps((a.data ?? []) as Application[]);
-    setIsSeller((r.data ?? []).some((x: { role: string }) => x.role === "seller" || x.role === "admin"));
+    setApps(((a as any).data ?? []) as Application[]);
+    setIsSeller(((r as any).data ?? []).some((x: { role: string }) => x.role === "seller" || x.role === "admin"));
     setLoading(false);
   };
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [user]);
