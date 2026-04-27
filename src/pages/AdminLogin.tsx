@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { ShieldAlert, Lock, KeyRound, Loader2 } from "lucide-react";
+import { describeAuthError } from "@/lib/authErrors";
 
 const ADMIN_EMAIL = "samexpoit@gmail.com";
 const ADMIN_USERNAME = "admin@cruzercc";
@@ -48,11 +49,12 @@ const AdminLogin = () => {
       nav("/admin");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Login failed";
-      toast.error(
-        message.includes("Could not verify admin access")
-          ? "Backend checked in but admin permission lookup failed. Please try again now."
-          : message,
-      );
+      if (message.includes("Could not verify admin access")) {
+        toast.error("Backend checked in but admin permission lookup failed. Please try again now.");
+      } else {
+        const friendly = describeAuthError(err);
+        toast.error(friendly.title, friendly.hint ? { description: friendly.hint } : undefined);
+      }
     } finally { setLoading(false); }
   };
 
@@ -64,7 +66,8 @@ const AdminLogin = () => {
       if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
       toast.success("Admin account ready — sign in below");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Bootstrap failed");
+      const friendly = describeAuthError(err);
+      toast.error(friendly.title, friendly.hint ? { description: friendly.hint } : undefined);
     } finally { setBootstrapping(false); }
   };
 
