@@ -758,34 +758,34 @@ export type Database = {
       }
     }
     Functions: {
+      get_purchased_card_full: {
+        Args: { _card_ids: string[] }
+        Returns: {
+          address: string
+          base: string
+          bin: string
+          brand: string
+          cc_number: string
+          city: string
+          country: string
+          cvv: string
+          email: string
+          exp_month: string
+          exp_year: string
+          holder_name: string
+          id: string
+          phone: string
+          price: number
+          state: string
+          zip: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
-      }
-      list_available_cards: {
-        Args: never
-        Returns: {
-          base: string
-          bin: string
-          brand: string
-          city: string
-          country: string
-          created_at: string
-          exp_month: string
-          exp_year: string
-          has_email: boolean
-          has_phone: boolean
-          id: string
-          price: number
-          refundable: boolean
-          seller_id: string
-          state: string
-          status: string
-          zip: string
-        }[]
       }
     }
     Enums: {
