@@ -1,113 +1,193 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Home, Store, ShoppingCart, ListOrdered, Wallet, LifeBuoy, Settings, ShieldCheck, PackagePlus, LogOut, Sparkles } from "lucide-react";
+import { Home, Store, ShoppingCart, ListOrdered, Wallet, LifeBuoy, Settings, ShieldCheck, PackagePlus, LogOut, Menu, X, Search, Bell } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import logo from "@/assets/panther-logo.png";
 import { Button } from "@/components/ui/button";
 
 const baseNav = [
   { to: "/", label: "Home", icon: Home },
-  { to: "/shop", label: "Shop", icon: Store },
+  { to: "/shop", label: "Marketplace", icon: Store },
   { to: "/cart", label: "Cart", icon: ShoppingCart },
   { to: "/orders", label: "Orders", icon: ListOrdered },
-  { to: "/recharge", label: "Recharge", icon: Wallet },
+  { to: "/recharge", label: "Wallet", icon: Wallet },
   { to: "/tickets", label: "Support", icon: LifeBuoy },
-  { to: "/settings", label: "Settings", icon: Settings },
 ];
 
 export const AppShell = ({ children }: { children: ReactNode }) => {
   const { profile, roles, signOut } = useAuth();
   const nav = useNavigate();
   const loc = useLocation();
+  const [open, setOpen] = useState(false);
 
   const items = [...baseNav];
   if (roles.includes("seller") || roles.includes("admin")) {
-    items.splice(5, 0, { to: "/seller", label: "Seller Panel", icon: PackagePlus });
+    items.splice(5, 0, { to: "/seller", label: "Seller", icon: PackagePlus });
   }
   if (roles.includes("admin")) {
-    items.splice(items.length - 1, 0, { to: "/admin", label: "Admin", icon: ShieldCheck });
+    items.push({ to: "/admin", label: "Admin", icon: ShieldCheck });
   }
 
+  const isActive = (to: string) => to === "/" ? loc.pathname === "/" : loc.pathname.startsWith(to);
+
   return (
-    <div className="min-h-screen flex w-full bg-background">
-      {/* Sidebar */}
-      <aside className="hidden md:flex flex-col w-64 shrink-0 border-r border-border/60 bg-sidebar/80 backdrop-blur-xl sticky top-0 h-screen">
-        <div className="px-5 py-5 flex items-center gap-3 border-b border-border/60">
-          <img src={logo} alt="cruzercc.shop logo" className="h-9 w-9 drop-shadow-[0_0_12px_hsl(268_90%_60%/0.7)]" width={36} height={36} />
-          <div>
-            <div className="font-display text-lg font-black neon-text leading-none">CRUZERCC</div>
-            <div className="text-[10px] tracking-[0.3em] text-muted-foreground mt-0.5">GIFT CARD · CC</div>
+    <div className="min-h-screen flex flex-col w-full bg-background relative">
+      {/* Ambient glow */}
+      <div className="pointer-events-none fixed inset-x-0 top-0 h-[420px] bg-gradient-glow opacity-60" />
+
+      {/* Announcement bar */}
+      <div className="relative z-40 border-b border-border/40 bg-black/40 backdrop-blur-xl overflow-hidden">
+        <div className="flex items-center gap-12 py-2 text-[11px] font-mono tracking-[0.18em] text-muted-foreground whitespace-nowrap">
+          <div className="ticker shrink-0 gap-12 flex pl-6">
+            {Array.from({ length: 2 }).map((_, k) => (
+              <div key={k} className="flex gap-12">
+                <span><span className="text-primary-glow">●</span> LIVE INVENTORY · 12,400+ FRESH CARDS</span>
+                <span className="text-gold/80">★ VERIFIED SELLERS · INSTANT DELIVERY</span>
+                <span><span className="text-success">●</span> 99.4% VALID RATE THIS WEEK</span>
+                <span className="text-gold/80">↗ AUTO REPLACEMENT WITHIN 5 MINUTES</span>
+                <span><span className="text-primary-glow">●</span> SUPPORT 24/7 · @CRUZERCC_SUPPORT</span>
+              </div>
+            ))}
           </div>
         </div>
+      </div>
 
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto scrollbar-thin">
-          {items.map((it) => (
-            <NavLink
-              key={it.to}
-              to={it.to}
-              end={it.to === "/"}
-              className={({ isActive }) =>
-                `group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${
-                  isActive
-                    ? "bg-primary/15 text-primary border border-primary/30 shadow-[inset_0_0_12px_hsl(354_84%_52%/0.15)]"
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
-                }`
-              }
-            >
-              <it.icon className="h-4 w-4" />
-              <span className="font-medium">{it.label}</span>
-            </NavLink>
-          ))}
-        </nav>
-
-        <div className="p-3 border-t border-border/60">
-          <button
-            onClick={async () => { await signOut(); nav("/auth"); }}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition"
-          >
-            <LogOut className="h-4 w-4" /> Sign out
-          </button>
-        </div>
-      </aside>
-
-      {/* Main */}
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="sticky top-0 z-30 h-16 px-4 md:px-8 flex items-center justify-between border-b border-border/60 bg-background/70 backdrop-blur-xl">
-          <div className="md:hidden flex items-center gap-2">
-            <img src={logo} alt="" className="h-8 w-8 drop-shadow-[0_0_10px_hsl(268_90%_60%/0.6)]" width={32} height={32} />
-            <span className="font-display font-black neon-text tracking-widest text-sm">CRUZERCC.SHOP</span>
-          </div>
-          <div className="hidden md:block text-sm text-muted-foreground">
-            {loc.pathname === "/" ? "Welcome back" : ""}
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="glass px-3 py-1.5 rounded-full flex items-center gap-2">
-              <Sparkles className="h-3.5 w-3.5 text-primary-glow" />
-              <span className="text-xs text-muted-foreground">Balance</span>
-              <span className="font-display font-bold text-primary-glow">${Number(profile?.balance ?? 0).toFixed(2)}</span>
+      {/* Top Navbar */}
+      <header className="sticky top-0 z-40 border-b border-border/50 bg-background/70 backdrop-blur-2xl">
+        <div className="mx-auto max-w-[1500px] px-4 lg:px-8 h-[72px] flex items-center justify-between gap-6">
+          {/* Brand */}
+          <NavLink to="/" className="flex items-center gap-3 group shrink-0">
+            <div className="relative">
+              <div className="absolute inset-0 rounded-xl bg-primary/30 blur-xl group-hover:bg-primary/50 transition" />
+              <img src={logo} alt="cruzercc.shop" width={42} height={42}
+                className="relative h-10 w-10 drop-shadow-[0_0_18px_hsl(268_90%_62%/0.65)]" />
             </div>
-            <NavLink to="/settings" className="flex items-center gap-2 glass px-3 py-1.5 rounded-full hover:neon-border transition">
-              <div className="h-6 w-6 rounded-full bg-gradient-primary flex items-center justify-center text-[11px] font-bold text-primary-foreground">
+            <div className="leading-none">
+              <div className="font-display text-[18px] font-bold tracking-tight">
+                <span className="text-foreground">cruzer</span><span className="gold-text">cc</span>
+                <span className="text-muted-foreground">.shop</span>
+              </div>
+              <div className="font-mono text-[9px] tracking-[0.32em] text-muted-foreground/70 mt-1">
+                GIFT CARD · CC PROVIDER
+              </div>
+            </div>
+          </NavLink>
+
+          {/* Desktop nav pills */}
+          <nav className="hidden lg:flex items-center gap-1 bg-secondary/30 border border-border/40 rounded-full p-1">
+            {items.map((it) => (
+              <NavLink
+                key={it.to}
+                to={it.to}
+                end={it.to === "/"}
+                className="nav-pill"
+                data-active={isActive(it.to)}
+              >
+                <it.icon className="h-3.5 w-3.5" />
+                <span>{it.label}</span>
+              </NavLink>
+            ))}
+          </nav>
+
+          {/* Right cluster */}
+          <div className="flex items-center gap-2 shrink-0">
+            <button className="hidden md:flex h-10 w-10 items-center justify-center rounded-full border border-border/50 hover:border-primary/40 hover:text-primary-glow text-muted-foreground transition">
+              <Search className="h-4 w-4" />
+            </button>
+            <button className="hidden md:flex h-10 w-10 items-center justify-center rounded-full border border-border/50 hover:border-primary/40 hover:text-primary-glow text-muted-foreground transition relative">
+              <Bell className="h-4 w-4" />
+              <span className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-gold animate-pulse" />
+            </button>
+
+            <div className="hidden sm:flex items-center gap-2 px-3.5 h-10 rounded-full bg-gradient-to-r from-primary/15 to-gold/10 border border-primary/30">
+              <Wallet className="h-3.5 w-3.5 text-primary-glow" />
+              <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Bal</span>
+              <span className="font-display font-bold text-sm gold-text">${Number(profile?.balance ?? 0).toFixed(2)}</span>
+            </div>
+
+            <NavLink to="/settings" className="flex items-center gap-2.5 h-10 pl-1 pr-3.5 rounded-full border border-border/50 hover:border-primary/40 transition group">
+              <div className="h-8 w-8 rounded-full bg-gradient-primary flex items-center justify-center text-[12px] font-bold text-primary-foreground shadow-neon">
                 {profile?.username?.[0]?.toUpperCase() ?? "U"}
               </div>
-              <span className="text-xs font-medium hidden sm:block">{profile?.username}</span>
+              <div className="hidden xl:block leading-tight">
+                <div className="text-[12px] font-semibold text-foreground">{profile?.username}</div>
+                <div className="text-[9px] text-muted-foreground uppercase tracking-widest">
+                  {roles.includes("admin") ? "Admin" : roles.includes("seller") ? "Seller" : "Member"}
+                </div>
+              </div>
             </NavLink>
+
+            <button onClick={async () => { await signOut(); nav("/auth"); }}
+              className="hidden md:flex h-10 w-10 items-center justify-center rounded-full border border-border/50 hover:border-destructive/50 hover:text-destructive text-muted-foreground transition" aria-label="Sign out">
+              <LogOut className="h-4 w-4" />
+            </button>
+
+            <button onClick={() => setOpen(!open)} className="lg:hidden h-10 w-10 flex items-center justify-center rounded-full border border-border/50">
+              {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+            </button>
           </div>
-        </header>
+        </div>
 
-        {/* Mobile bottom nav */}
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 glass border-t border-border/60 grid grid-cols-5">
-          {items.slice(0, 5).map((it) => (
-            <NavLink key={it.to} to={it.to} end={it.to === "/"}
-              className={({ isActive }) => `flex flex-col items-center gap-0.5 py-2 text-[10px] ${isActive ? "text-primary" : "text-muted-foreground"}`}>
-              <it.icon className="h-4 w-4" />
-              {it.label}
-            </NavLink>
-          ))}
-        </nav>
+        {/* Mobile drawer */}
+        {open && (
+          <div className="lg:hidden border-t border-border/50 bg-background/95 backdrop-blur-2xl animate-fade-up">
+            <div className="px-4 py-4 grid grid-cols-2 gap-2">
+              {items.map((it) => (
+                <NavLink key={it.to} to={it.to} end={it.to === "/"} onClick={() => setOpen(false)}
+                  className={({ isActive }) => `flex items-center gap-2 px-3 py-3 rounded-xl text-sm font-medium transition ${
+                    isActive ? "bg-primary/15 text-primary-glow border border-primary/30" : "bg-secondary/40 border border-border/40 text-muted-foreground"
+                  }`}>
+                  <it.icon className="h-4 w-4" /> {it.label}
+                </NavLink>
+              ))}
+              <button onClick={async () => { await signOut(); nav("/auth"); }}
+                className="col-span-2 flex items-center justify-center gap-2 px-3 py-3 rounded-xl text-sm font-medium bg-destructive/10 text-destructive border border-destructive/30">
+                <LogOut className="h-4 w-4" /> Sign out
+              </button>
+            </div>
+          </div>
+        )}
+      </header>
 
-        <main className="flex-1 px-4 md:px-8 py-6 pb-24 md:pb-8 animate-fade-up">{children}</main>
-      </div>
+      {/* Main */}
+      <main className="flex-1 mx-auto w-full max-w-[1500px] px-4 lg:px-8 py-8 animate-fade-up relative z-10">
+        {children}
+      </main>
+
+      {/* Footer */}
+      <footer className="relative z-10 border-t border-border/40 bg-black/30 backdrop-blur-xl mt-16">
+        <div className="mx-auto max-w-[1500px] px-4 lg:px-8 py-10 grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="col-span-2">
+            <div className="flex items-center gap-2.5 mb-3">
+              <img src={logo} alt="" className="h-8 w-8" />
+              <div className="font-display font-bold text-base">
+                <span>cruzer</span><span className="gold-text">cc</span><span className="text-muted-foreground">.shop</span>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground max-w-md leading-relaxed">
+              Premium Gift Card and CC marketplace. Verified inventory, instant delivery, vault-grade
+              security — trusted by thousands of professional buyers worldwide.
+            </p>
+          </div>
+          <div>
+            <h4 className="font-display text-xs uppercase tracking-[0.25em] text-foreground mb-3">Platform</h4>
+            <ul className="space-y-1.5 text-xs text-muted-foreground">
+              <li>Marketplace</li><li>Wallet & Recharge</li><li>Seller Program</li><li>Refund Policy</li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-display text-xs uppercase tracking-[0.25em] text-foreground mb-3">Contact</h4>
+            <ul className="space-y-1.5 text-xs text-muted-foreground">
+              <li><span className="gold-text">@cruzercc_shop</span></li>
+              <li><span className="gold-text">@cruzercc_sales</span></li>
+              <li><span className="gold-text">@cruzercc_support</span></li>
+            </ul>
+          </div>
+        </div>
+        <div className="border-t border-border/40 py-4 text-center text-[10px] font-mono tracking-[0.3em] text-muted-foreground">
+          © {new Date().getFullYear()} CRUZERCC.SHOP · ALL RIGHTS RESERVED
+        </div>
+      </footer>
     </div>
   );
 };
